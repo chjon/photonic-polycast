@@ -26,7 +26,7 @@ namespace PPCast {
          */
         Camera(const glm::vec3& pos, const glm::vec3& centre, const glm::vec3& up);
 
-        png::image<png::rgb_pixel> render(const std::vector<GeometryNode>& env, uint32_t width, uint32_t height) const;
+        png::image<png::rgb_pixel> render(const std::vector<GeometryNode>& scene, uint32_t width, uint32_t height) const;
     };
 }
 

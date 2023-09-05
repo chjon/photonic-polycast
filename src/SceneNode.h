@@ -3,13 +3,9 @@
 
 #include "Common.h"
 #include "Renderable.h"
+#include "Geometry.h"
 
 namespace PPCast {
-    enum class Geometry: int {
-        Sphere = 0,
-        Cube   = 1,
-    };
-
     class SceneNode {
     protected:
         glm::mat4x4 transform;
@@ -59,10 +55,10 @@ namespace PPCast {
     private:
 
     public:
-        Geometry m_geometry;
-        GeometryNode(Geometry g)
+        Geometry::Primitive m_primitive;
+        GeometryNode(Geometry::Primitive primitive)
             : SceneNode()
-            , m_geometry(g)
+            , m_primitive(primitive)
         {}
 
         virtual bool getIntersection(HitInfo& hitInfo, const Ray& r) const override;
