@@ -2,9 +2,7 @@
 #define PPCAST_OPTIONS_H
 
 #include <getopt.h>
-#include <iostream>
-#include <string>
-#include <vector>
+#include "Common.h"
 
 //////////////////////////////
 // Configuration for getopt //
@@ -55,11 +53,11 @@ namespace PPCast {
         }
     };
 
-    class BoolOption : protected Option {
+    class BoolOption : public Option {
     protected:
         bool m_data;
 
-        virtual std::ostream& toStream(std::ostream &os) const { return os << m_data; }
+        virtual std::ostream& toStream(std::ostream &os) const override { return os << m_data; }
 
     public:
         BoolOption(const std::string& name, const std::string& desc, bool defaultVal)
@@ -68,14 +66,14 @@ namespace PPCast {
         {}
 
         bool operator* () const { return m_data; }
-        virtual int parse(const char* arg);
+        virtual int parse(const char* arg) override;
     };
 
-    class UIntOption : protected Option {
+    class UIntOption : public Option {
     protected:
         uint32_t m_data;
 
-        virtual std::ostream& toStream(std::ostream &os) const { return os << m_data; }
+        virtual std::ostream& toStream(std::ostream &os) const override { return os << m_data; }
 
     public:
         UIntOption(const std::string& name, const std::string& desc, uint32_t defaultVal)
@@ -84,14 +82,14 @@ namespace PPCast {
         {}
 
         uint32_t operator* () const { return m_data; }
-        virtual int parse(const char* arg);
+        virtual int parse(const char* arg) override;
     };
 
-    class FloatOption : protected Option {
+    class FloatOption : public Option {
     protected:
         float m_data;
 
-        virtual std::ostream& toStream(std::ostream &os) const { return os << m_data; }
+        virtual std::ostream& toStream(std::ostream &os) const override { return os << m_data; }
 
     public:
         FloatOption(const std::string& name, const std::string& desc, float defaultVal)
@@ -100,14 +98,14 @@ namespace PPCast {
         {}
 
         float operator* () const { return m_data; }
-        virtual int parse(const char* arg);
+        virtual int parse(const char* arg) override;
     };
 
-    class StringOption : protected Option {
+    class StringOption : public Option {
     protected:
         std::string m_data;
 
-        virtual std::ostream& toStream(std::ostream &os) const { return os << '"' << m_data << '"'; }
+        virtual std::ostream& toStream(std::ostream &os) const override { return os << '"' << m_data << '"'; }
 
     public:
         StringOption(const std::string& name, const std::string& desc, const std::string& defaultVal)
@@ -116,7 +114,7 @@ namespace PPCast {
         {}
 
         const std::string& operator* () const { return m_data; }
-        virtual int parse(const char* arg);
+        virtual int parse(const char* arg) override;
     };
 }
 

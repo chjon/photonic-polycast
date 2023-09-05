@@ -1,5 +1,7 @@
+#include "Common.h"
 #include "Camera.h"
 #include "Options.h"
+#include "SceneNode.h"
 
 using namespace PPCast;
 
@@ -16,15 +18,17 @@ int main(int argc, char *const *argv) {
     if (*opt_verb >= 1) Options::printConfig(std::cout);
 
     // Set up camera
-    const glm::vec3 pos   (-10, 0, 0);
-    const glm::vec3 centre(  0, 0, 0);
-    const glm::vec3 up    (  0, 1, 0);
+    const glm::vec3 pos   (0, 0, 2);
+    const glm::vec3 centre(0, 0, 0);
+    const glm::vec3 up    (0, 1, 0);
     const Camera cam(pos, centre, up);
 
-    // TODO: Set up environment
+    // Set up environment
+    std::vector<GeometryNode> env;
+    env.push_back(GeometryNode(Geometry::Sphere)); env.back().scaleY(0.5);
 
     // Generate image via raytracing
-    png::image image = cam.render(*opt_img_w, *opt_img_h);
+    png::image image = cam.render(env, *opt_img_w, *opt_img_h);
 
     // Output image
     if (!(*opt_outfile).empty()) image.write(*opt_outfile);

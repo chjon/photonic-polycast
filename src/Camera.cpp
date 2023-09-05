@@ -4,48 +4,61 @@
 
 using namespace PPCast;
 
-static FloatOption opt_cam_fovy   ("cam-fovy"  , "the camera's y-axis FOV in degrees"          ,  90.0f);
-static FloatOption opt_cam_aspect ("cam-aspect", "the camera's aspect ratio (x / y)"           ,   1.0f);
-static FloatOption opt_cam_near   ("cam-near"  , "distance to the camera's near clipping plane",   0.1f);
-static FloatOption opt_cam_far    ("cam-far"   , "distance to the camera's far clipping plane" , 100.0f);
+static FloatOption opt_cam_fovy   ("cam-fovy"  , "the camera's y-axis FOV in degrees",  90.0f);
+static FloatOption opt_cam_aspect ("cam-aspect", "the camera's aspect ratio (x / y)" ,   1.0f);
 
 Camera::Camera(const glm::vec3& pos, const glm::vec3& centre, const glm::vec3& up)
-    : m_pos      (pos)
-    , m_centre   (centre)
-    , m_up       (up)
-    , m_fov_y    (*opt_cam_fovy)
-    , m_aspect   (*opt_cam_aspect)
-    , m_nearPlane(*opt_cam_near)
-    , m_farPlane (*opt_cam_far)
+    : m_pos   (pos)
+    , m_centre(centre)
+    , m_up    (up)
+    , m_fovy  (*opt_cam_fovy)
+    , m_aspect(*opt_cam_aspect)
 {}
 
-static png::rgb_pixel raycast(const Ray& ray) {
-    const glm::vec3 colour = 255.99f * 0.5f * (ray.direction() + glm::vec3(1, 1, 1));
-    return png::rgb_pixel(colour.r, colour.g, colour.b);
+static png::rgb_pixel raycast(const std::vector<GeometryNode>& env, const Ray& ray) {
+    HitInfo hitInfo;
+    for (const GeometryNode& node : env) {
+        if (node.getIntersection(hitInfo, ray)) {
+            const glm::vec3 colour = 255.99f * 0.5f * (glm::normalize(glm::vec3(hitInfo.normal)) + glm::vec3(1, 1, 1));
+            return png::rgb_pixel(
+                static_cast<unsigned char>(colour.r),
+                static_cast<unsigned char>(colour.g),
+                static_cast<unsigned char>(colour.b)
+            );
+        }
+    }
+
+    return png::rgb_pixel(255, 0, 0);
 }
 
-png::image<png::rgb_pixel> Camera::render(uint32_t width, uint32_t height) const {
+png::image<png::rgb_pixel> Camera::render(const std::vector<GeometryNode>& env, uint32_t width, uint32_t height) const {
     // Compute viewport params
+    const double    focalLength      = 0.5 / glm::tan(glm::radians(0.5 * m_fovy));
     const glm::vec3 viewport_x       = glm::vec3(1 * m_aspect,  0, 0);
     const glm::vec3 viewport_y       = glm::vec3(0, -1, 0);
     const glm::vec3 pixel_dx         = viewport_x / static_cast<float>(width);
     const glm::vec3 pixel_dy         = viewport_y / static_cast<float>(height);
-    const glm::vec3 viewport_topLeft = glm::vec3(0, 0, m_nearPlane) - 0.5f * (viewport_x + viewport_y);
+    const glm::vec3 viewport_topLeft = -glm::vec3(0, 0, focalLength) - 0.5f * (viewport_x + viewport_y);
     const glm::vec3 pixel_topLeft    = viewport_topLeft + 0.5f * (pixel_dx + pixel_dy);
 
     // Actually render the image
     png::image<png::rgb_pixel> image(width, height);
     for (png::uint_32 y = 0; y < height; ++y) {
-        std::clog << "Rendering scanlines: " << (y + 1) << " / " << height << "\r" << std::flush;
+        std::clog << "\rRendering scanlines: " << (y + 1) << " / " << height << " " << std::flush;
         for (png::uint_32 x = 0; x < width; ++x) {
             const glm::vec3 curr_pixel = pixel_topLeft + (static_cast<float>(x) * pixel_dx) + (static_cast<float>(y) * pixel_dy);
-            const Ray ray(glm::vec3(0, 0, 0), curr_pixel);
+            const glm::mat4 vinv = glm::inverse(getView());
+            const Ray ray(
+                vinv * glm::vec4(0, 0, 0, 1),
+                vinv * glm::vec4(curr_pixel, 0),
+                Interval<float>(0.f, std::numeric_limits<float>::infinity(), true, false)
+            );
 
-            // TODO: pass in the world and perform raytracing
-            image[y][x] = raycast(ray);
+            // Perform raytracing
+            image[y][x] = raycast(env, ray);
         }
     }
-    std::clog << "Rendering completed: " << height << " / " << height << std::flush << std::endl;
+    std::clog << "\rRendering completed: " << height << " / " << height << std::flush << std::endl;
 
     return image;
 }
