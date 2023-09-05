@@ -2,6 +2,7 @@ CWD = $(shell pwd)
 
 CPP = g++
 CPPFLAGS = -g -std=c++17 -MMD -MP
+CPPFLAGS += -O3
 CPPFLAGS += -Wall -Wextra -Werror -Wshadow -Wconversion -Wunreachable-code
 CPPFLAGS += -isystem lib
 LDFLAGS  = `libpng-config --ldflags` 
