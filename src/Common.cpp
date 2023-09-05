@@ -1,5 +1,25 @@
 #include "Common.h"
 
+float randomFloat() {
+    return static_cast<float>(rand()) / (static_cast<float>(RAND_MAX) + 1.f);
+}
+
+float randomFloat(float min, float max) {
+    return min + (max - min) * randomFloat();
+}
+
+glm::vec3 randomUnitVector() {
+    while (true) {
+        const glm::vec3 candidate = glm::vec3(randomFloat(-1,1), randomFloat(-1,1), randomFloat(-1,1));
+        if (glm::dot(candidate, candidate) < 1) return glm::normalize(candidate);
+    }
+}
+
+glm::vec4 randomOnHemisphere(const glm::vec4& normal) {
+    glm::vec4 v = glm::vec4(randomUnitVector(), 0);
+    return (glm::dot(v, normal) < 0) ? -v : v;
+}
+
 std::ostream& operator<<(std::ostream &os, const glm::vec2& v) {
     return os << '(' << v.x << ',' << v.y << ')';
 }

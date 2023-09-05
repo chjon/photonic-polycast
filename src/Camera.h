@@ -17,6 +17,8 @@ namespace PPCast {
         float m_fovy;
         float m_aspect;
 
+        uint32_t m_jitter;
+
         glm::mat4x4 getView() const { return glm::lookAt(m_pos, m_centre, m_up); }
 
     public:

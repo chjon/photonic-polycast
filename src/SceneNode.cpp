@@ -12,6 +12,7 @@ bool GeometryNode::getIntersection(HitInfo& hitInfo, const Ray& r) const {
     // Transform HitInfo back into original coordinates
     hitInfo.hitPoint = r.at(hitInfo.t);
     hitInfo.normal   = glm::transpose(invtransform) * hitInfo.normal;
+    hitInfo.material = material;
 
     return true;
 }

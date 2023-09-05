@@ -56,8 +56,9 @@ namespace PPCast {
 
     public:
         Geometry::Primitive m_primitive;
-        GeometryNode(Geometry::Primitive primitive)
+        GeometryNode(Geometry::Primitive primitive, const std::shared_ptr<Material>& mat)
             : SceneNode()
+            , Renderable(mat)
             , m_primitive(primitive)
         {}
 

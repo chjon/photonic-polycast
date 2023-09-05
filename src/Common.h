@@ -10,11 +10,21 @@
 #include <glm/vec4.hpp>
 
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <string>
 #include <vector>
 
+// Utils
+float randomFloat();
+float randomFloat(float min, float max);
+
+glm::vec3 randomUnitVector();
+glm::vec4 randomOnHemisphere(const glm::vec4& normal);
+
+// Printing GLM vectors and matrices
 std::ostream& operator<<(std::ostream &os, const glm::vec2& v);
 std::ostream& operator<<(std::ostream &os, const glm::vec3& v);
 std::ostream& operator<<(std::ostream &os, const glm::vec4& v);
