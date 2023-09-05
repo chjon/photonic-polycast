@@ -21,7 +21,7 @@ namespace PPCast {
         //////////
         // Scaling
         inline SceneNode& scale(const glm::vec3& scaleFactor) {
-            transform    = glm::scale(transform, scaleFactor);
+            transform    = glm::scale(glm::mat4(1), scaleFactor) * transform;
             invtransform = glm::inverse(transform);
             return *this;
         }
@@ -34,7 +34,7 @@ namespace PPCast {
         ///////////////
         // Translations
         inline SceneNode& translate(const glm::vec3& distance) {
-            transform    = glm::translate(transform, distance);
+            transform    = glm::translate(glm::mat4(1), distance) * transform;
             invtransform = glm::inverse(transform);
             return *this;
         }
@@ -46,7 +46,7 @@ namespace PPCast {
         // Rotations
 
         inline SceneNode& rotate(const float angle_rad, const glm::vec3& axis) {
-            transform    = glm::rotate(transform, angle_rad, axis);
+            transform    = glm::rotate(glm::mat4(1), angle_rad, axis) * transform;
             invtransform = glm::inverse(transform);
             return *this;
         }
