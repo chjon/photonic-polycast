@@ -15,12 +15,7 @@ static UIntOption   opt_verb   ("verb"     , "verbosity (0 = none, 1 = less, 2 =
 static UIntOption   opt_scene  ("testscene", "test scene"                              , 0);
 static UIntOption   opt_seed   ("seed"     , "random seed"                             , 0xDECAFBAD);
 
-int main(int argc, char *const *argv) {
-    // Parse command line options
-    if (Options::parseOptions(argc, argv)) return -1;
-    if (*opt_verb >= 1) Options::printConfig(std::cout);
-    srand(*opt_seed);
-
+static std::vector<GeometryNode> makeScene() {
     // Set up materials
     auto diffuseYellow = std::make_shared<MaterialDiffuse   >(glm::vec3(0.8, 0.8, 0.0));
     auto diffuseRed    = std::make_shared<MaterialDiffuse   >(glm::vec3(0.7, 0.3, 0.3));
@@ -28,18 +23,12 @@ int main(int argc, char *const *argv) {
     auto lambertYellow = std::make_shared<MaterialLambertian>(glm::vec3(0.8, 0.8, 0.0));
     auto lambertRed    = std::make_shared<MaterialLambertian>(glm::vec3(0.7, 0.3, 0.3));
     auto lambertGrey   = std::make_shared<MaterialLambertian>(glm::vec3(0.5, 0.5, 0.5));
-    auto metalSilver   = std::make_shared<MaterialMetal     >(glm::vec3(1.0, 1.0, 1.0));
+    auto metalSilver   = std::make_shared<MaterialMetal     >(glm::vec3(0.9, 0.9, 0.9));
     auto metalFuzz     = std::make_shared<MaterialMetal     >(glm::vec3(0.8, 0.6, 0.2), 0.3f);
-    auto glass         = std::make_shared<MaterialRefractive>(glm::vec3(1.0, 1.0, 1.0), 1.1f);
+    auto glass         = std::make_shared<MaterialRefractive>(glm::vec3(1.0, 1.0, 1.0), 1.5f);
     auto normalMat     = std::make_shared<MaterialNormal    >();
 
-    // Set up camera
-    const glm::vec3 pos   (0, 0, 1);
-    const glm::vec3 centre(0, 0, 0);
-    const glm::vec3 up    (0, 1, 0);
-    const Camera cam(pos, centre, up);
-    
-    // Set up scene
+    // Generate scene
     std::vector<GeometryNode> scene;
     switch (*opt_scene) {
         case 0:
@@ -66,7 +55,7 @@ int main(int argc, char *const *argv) {
                 .translate({0, -100.5, 0});
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, lambertRed)); scene.back()
                 .scale(0.5);
-            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, metalSilver)); scene.back()
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
                 .scale(0.5)
                 .translate({-1.0, 0, 0});
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, metalSilver)); scene.back()
@@ -75,21 +64,24 @@ int main(int argc, char *const *argv) {
             break;
         case 4:
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, diffuseYellow)); scene.back()
-                .scale(100)
+                .scale(100.f)
                 .translate({0, -100.5, 0});
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, lambertRed)); scene.back()
+                .scale(0.5f);
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
-                .scale(0.5);
-            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
-                .scale(0.5)
+                .scale(0.5f)
                 .translate({-1.0, 0, 0});
-            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, metalSilver)); scene.back()
-                .scale(0.5)
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, std::make_shared<MaterialRefractive>(glm::vec3(1.0, 1.0, 1.0), 1.f/1.5f))); scene.back()
+                .scale(0.40f)
+                .translate({-1.0, 0, 0});
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, metalFuzz)); scene.back()
+                .scale(0.5f)
                 .translate({+1.0, 0, 0});
             break;
         case 5:
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
                 .scale(0.5)
-                .translate({0, 0, 1.0});
+                .translate({0, 0, 1.2});
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, normalMat)); scene.back()
                 .scale(0.5)
                 .translate({0, 0, -1.0});
@@ -104,6 +96,24 @@ int main(int argc, char *const *argv) {
         default:
             break;
     }
+
+    return scene;
+}
+
+int main(int argc, char *const *argv) {
+    // Parse command line options
+    if (Options::parseOptions(argc, argv)) return -1;
+    if (*opt_verb >= 1) Options::printConfig(std::cout);
+    srand(*opt_seed);
+
+    // Set up camera
+    const glm::vec3 pos   (0, 0, 1);
+    const glm::vec3 centre(0, 0, 0);
+    const glm::vec3 up    (0, 1, 0);
+    const Camera cam(pos, centre, up);
+    
+    // Set up scene
+    std::vector<GeometryNode> scene = makeScene();
 
     // Generate image via raytracing
     png::image image = cam.render(scene, *opt_img_w, *opt_img_h);

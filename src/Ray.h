@@ -11,7 +11,7 @@ namespace PPCast {
         float t = std::numeric_limits<float>::max();
         glm::vec4 hitPoint;
         glm::vec4 normal;
-        bool outerNormal;
+        bool hitOutside;
         std::shared_ptr<Material> material;
     };
 

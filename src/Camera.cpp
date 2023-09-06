@@ -44,8 +44,8 @@ static glm::vec3 raycast(const std::vector<GeometryNode>& scene, const Ray& ray,
     if (hit) {
         glm::vec4 scatterDirection;
         glm::vec3 attenuation;
-        if (hitInfo.material->scatter(scatterDirection, attenuation, ray.direction(), hitInfo.normal)) {
-            Ray bounceRay(hitInfo.hitPoint, scatterDirection, Interval<float>(1e-3f, std::numeric_limits<float>::infinity(), true, false));
+        if (hitInfo.material->scatter(scatterDirection, attenuation, ray.direction(), hitInfo)) {
+            Ray bounceRay(hitInfo.hitPoint, glm::normalize(scatterDirection), Interval<float>(1e-3f, std::numeric_limits<float>::infinity(), true, false));
             return attenuation * raycast(scene, bounceRay, maxDepth - 1);
         } else {
             return attenuation;
