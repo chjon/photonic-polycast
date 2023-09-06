@@ -11,7 +11,7 @@ float randomFloat(float min, float max) {
 glm::vec3 randomUnitVector() {
     while (true) {
         const glm::vec3 candidate = glm::vec3(randomFloat(-1,1), randomFloat(-1,1), randomFloat(-1,1));
-        if (glm::dot(candidate, candidate) < 1) return glm::normalize(candidate);
+        if (glm::dot(candidate, candidate) < 1.f) return glm::normalize(candidate);
     }
 }
 

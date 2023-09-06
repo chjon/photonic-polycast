@@ -22,7 +22,7 @@ bool Geometry::intersectSphere(float& t, glm::vec4& normal, const Ray& r) {
 
     // Update hit info
     t      = root;
-    normal = r.at(root);
+    normal = glm::vec4(r.at(root).xyz(), 0);
 
     return true;
 }

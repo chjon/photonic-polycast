@@ -9,9 +9,9 @@ bool GeometryNode::getIntersection(HitInfo& hitInfo, const Ray& r) const {
     // Compute intersection
     if (!Geometry::intersect(hitInfo.t, hitInfo.normal, m_primitive, localRay)) return false;
 
-    // Transform HitInfo back into original coordinates
+    // Record HitInfo in original coordinates
     hitInfo.hitPoint = r.at(hitInfo.t);
-    hitInfo.normal   = glm::transpose(invtransform) * hitInfo.normal;
+    hitInfo.normal   = glm::normalize(hitInfo.hitPoint - transform * glm::vec4(0, 0, 0, 1));
     hitInfo.material = material;
 
     return true;

@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include "Material.h"
 #include "Options.h"
 #include "Ray.h"
 
@@ -19,7 +20,7 @@ Camera::Camera(const glm::vec3& pos, const glm::vec3& centre, const glm::vec3& u
 {}
 
 static png::rgb_pixel vec2Pixel(const glm::vec3& v) {
-    const glm::vec3 colour = 255.99f * v;
+    const glm::vec3 colour = 255.99f * glm::sqrt(v);
     return png::rgb_pixel(
         static_cast<unsigned char>(colour.r),
         static_cast<unsigned char>(colour.g),
@@ -41,8 +42,6 @@ static glm::vec3 raycast(const std::vector<GeometryNode>& scene, const Ray& ray,
     }
     
     if (hit) {
-        if (glm::dot(ray.direction(), hitInfo.normal) > 0) return glm::vec3(0);
-
         glm::vec4 scatterDirection;
         glm::vec3 attenuation;
         if (hitInfo.material->scatter(scatterDirection, attenuation, ray.direction(), hitInfo.normal)) {
@@ -55,7 +54,6 @@ static glm::vec3 raycast(const std::vector<GeometryNode>& scene, const Ray& ray,
 
     const float a = 0.5f * (glm::normalize(ray.direction()).y + 1.f);
     return (1.f - a) * glm::vec3(1.f) + a * glm::vec3(0.5, 0.7, 1.0);
-    // return glm::vec3(1.);
 }
 
 png::image<png::rgb_pixel> Camera::render(const std::vector<GeometryNode>& scene, uint32_t width, uint32_t height) const {
@@ -82,7 +80,7 @@ png::image<png::rgb_pixel> Camera::render(const std::vector<GeometryNode>& scene
             if (m_jitter == 0) {
                 const Ray ray(
                     vinv * glm::vec4(0, 0, 0, 1),
-                    vinv * glm::vec4(rayDirection, 0),
+                    glm::normalize(vinv * glm::vec4(rayDirection, 0)),
                     Interval<float>(0.f, std::numeric_limits<float>::infinity(), true, false)
                 );
                 colour = raycast(scene, ray, *opt_max_depth);
@@ -93,7 +91,7 @@ png::image<png::rgb_pixel> Camera::render(const std::vector<GeometryNode>& scene
                     rayDirection = curr_pixel + randomX * pixel_dx + randomY * pixel_dy;
                     const Ray ray(
                         vinv * glm::vec4(0, 0, 0, 1),
-                        vinv * glm::vec4(rayDirection, 0),
+                        glm::normalize(vinv * glm::vec4(rayDirection, 0)),
                         Interval<float>(0.f, std::numeric_limits<float>::infinity(), true, false)
                     );
                     colour = colour + raycast(scene, ray, *opt_max_depth);
