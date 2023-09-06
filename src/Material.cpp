@@ -60,7 +60,7 @@ bool MaterialMetal::scatter(
 static inline float reflectance(float cosine, float refractiveIndex) {
     float r0 = (1.f - refractiveIndex) / (1.f + refractiveIndex);
     r0 = r0 * r0;
-    return r0 + (1.f - r0) * static_cast<float>(glm::pow((1.f - cosine), 5.f));
+    return r0 + (1.f - r0) * static_cast<float>(glm::pow((1.f - glm::abs(cosine)), 5.f));
 }
 
 bool MaterialRefractive::scatter(
