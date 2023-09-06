@@ -5,6 +5,16 @@
 #include "Interval.h"
 
 namespace PPCast {
+    class Material;
+
+    struct HitInfo {
+        float t = std::numeric_limits<float>::max();
+        glm::vec4 hitPoint;
+        glm::vec4 normal;
+        bool outerNormal;
+        std::shared_ptr<Material> material;
+    };
+
     class Ray {
     private:
         glm::vec4 m_origin;

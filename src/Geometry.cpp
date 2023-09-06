@@ -2,7 +2,7 @@
 
 using namespace PPCast;
 
-bool Geometry::intersectSphere(float& t, glm::vec4& normal, const Ray& r) {
+bool Geometry::intersectSphere(HitInfo& hitInfo, const Ray& r) {
     // Solving a*t^2 + 2*b*t + c = 0
     const glm::vec3 o = glm::vec3(r.origin());
     const glm::vec3 d = glm::vec3(r.direction());
@@ -21,8 +21,8 @@ bool Geometry::intersectSphere(float& t, glm::vec4& normal, const Ray& r) {
     }
 
     // Update hit info
-    t      = root;
-    normal = glm::vec4(r.at(root).xyz(), 0);
+    hitInfo.t      = root;
+    hitInfo.normal = glm::vec4(r.at(root).xyz(), 0);
 
     return true;
 }
@@ -39,7 +39,7 @@ static inline bool intersectCubePlane(float& t, const glm::vec3& n, const Ray& r
     return true;
 }
 
-bool Geometry::intersectCube(float& t, glm::vec4& normal, const Ray& r) {
+bool Geometry::intersectCube(HitInfo& hitInfo, const Ray& r) {
     const std::vector<glm::vec3> normals = {
         {+1, 0, 0}, {0, +1, 0}, {0, 0, +1},
         {-1, 0, 0}, {0, -1, 0}, {0, 0, -1},
@@ -49,9 +49,9 @@ bool Geometry::intersectCube(float& t, glm::vec4& normal, const Ray& r) {
     for (const glm::vec3& n : normals) {
         float tmpT = std::numeric_limits<float>::infinity();
         if (!intersectCubePlane(tmpT, n, r)) continue;
-        if (tmpT < t) {
-            normal = glm::vec4(n, 0);
-            t      = tmpT;
+        if (tmpT < hitInfo.t) {
+            hitInfo.normal = glm::vec4(n, 0);
+            hitInfo.t      = tmpT;
         }
         intersected = true;
     }
@@ -59,11 +59,11 @@ bool Geometry::intersectCube(float& t, glm::vec4& normal, const Ray& r) {
     return intersected;
 }
 
-bool Geometry::intersect(float& t, glm::vec4& normal, Primitive p, const Ray& r) {
+bool Geometry::intersect(HitInfo& hitInfo, Primitive p, const Ray& r) {
     // Check for intersection
     switch (p) {
-        case Primitive::Sphere: return intersectSphere(t, normal, r);
-        case Primitive::Cube  : return intersectCube  (t, normal, r);
+        case Primitive::Sphere: return intersectSphere(hitInfo, r);
+        case Primitive::Cube  : return intersectCube  (hitInfo, r);
         default: return false;
     }
 }

@@ -28,8 +28,9 @@ int main(int argc, char *const *argv) {
     auto lambertYellow = std::make_shared<MaterialLambertian>(glm::vec3(0.8, 0.8, 0.0));
     auto lambertRed    = std::make_shared<MaterialLambertian>(glm::vec3(0.7, 0.3, 0.3));
     auto lambertGrey   = std::make_shared<MaterialLambertian>(glm::vec3(0.5, 0.5, 0.5));
-    auto metalSilver   = std::make_shared<MaterialMetal     >(glm::vec3(0.9, 0.9, 0.9));
-    auto metalFuzz     = std::make_shared<MaterialMetal     >(glm::vec3(0.8, 0.6, 0.2), 0.3);
+    auto metalSilver   = std::make_shared<MaterialMetal     >(glm::vec3(1.0, 1.0, 1.0));
+    auto metalFuzz     = std::make_shared<MaterialMetal     >(glm::vec3(0.8, 0.6, 0.2), 0.3f);
+    auto glass         = std::make_shared<MaterialRefractive>(glm::vec3(1.0, 1.0, 1.0), 1.1f);
     auto normalMat     = std::make_shared<MaterialNormal    >();
 
     // Set up camera
@@ -76,14 +77,29 @@ int main(int argc, char *const *argv) {
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, diffuseYellow)); scene.back()
                 .scale(100)
                 .translate({0, -100.5, 0});
-            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, diffuseRed)); scene.back()
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
                 .scale(0.5);
-            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, metalSilver)); scene.back()
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
                 .scale(0.5)
                 .translate({-1.0, 0, 0});
-            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, metalFuzz)); scene.back()
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, metalSilver)); scene.back()
                 .scale(0.5)
                 .translate({+1.0, 0, 0});
+            break;
+        case 5:
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
+                .scale(0.5)
+                .translate({0, 0, 1.0});
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, normalMat)); scene.back()
+                .scale(0.5)
+                .translate({0, 0, -1.0});
+            break;
+        case 6:
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
+                .scale(0.5);
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, normalMat)); scene.back()
+                .scale(0.5)
+                .translate({0, 0, -2.0});
             break;
         default:
             break;

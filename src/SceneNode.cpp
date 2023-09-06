@@ -7,7 +7,7 @@ bool GeometryNode::getIntersection(HitInfo& hitInfo, const Ray& r) const {
     Ray localRay(invtransform * r.origin(), invtransform * r.direction(), r.interval());
 
     // Compute intersection
-    if (!Geometry::intersect(hitInfo.t, hitInfo.normal, m_primitive, localRay)) return false;
+    if (!Geometry::intersect(hitInfo, m_primitive, localRay)) return false;
 
     // Record HitInfo in original coordinates
     hitInfo.hitPoint = r.at(hitInfo.t);

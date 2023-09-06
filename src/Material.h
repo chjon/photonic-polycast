@@ -49,6 +49,19 @@ namespace PPCast {
         {}
         bool scatter(glm::vec4&, glm::vec3&, const glm::vec4&, const glm::vec4&) const override;
     };
+
+    class MaterialRefractive: public Material {
+    protected:
+        glm::vec3 m_attenuation;
+        float     m_refractiveIndex;
+    
+    public:
+        MaterialRefractive(const glm::vec3& colour, const float refractiveIndex)
+            : m_attenuation(colour)
+            , m_refractiveIndex(refractiveIndex)
+        {}
+        bool scatter(glm::vec4&, glm::vec3&, const glm::vec4&, const glm::vec4&) const override;
+    };
 }
 
 #endif

@@ -12,9 +12,9 @@ namespace PPCast {
             Cube   = 1,
         };
     
-        static bool intersect      (float& t, glm::vec4& normal, Primitive p, const Ray& r);
-        static bool intersectSphere(float& t, glm::vec4& normal, const Ray& r);
-        static bool intersectCube  (float& t, glm::vec4& normal, const Ray& r);
+        static bool intersect      (HitInfo& hitInfo, Primitive p, const Ray& r);
+        static bool intersectSphere(HitInfo& hitInfo, const Ray& r);
+        static bool intersectCube  (HitInfo& hitInfo, const Ray& r);
     };
 }
 

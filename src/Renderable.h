@@ -6,14 +6,6 @@
 
 namespace PPCast {
     class Material;
-
-    struct HitInfo {
-        float t = std::numeric_limits<float>::max();
-        glm::vec4 hitPoint;
-        glm::vec4 normal;
-        std::shared_ptr<Material> material;
-    };
-
     class Renderable {
     public:
         std::shared_ptr<Material> material;
