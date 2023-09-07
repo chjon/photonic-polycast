@@ -15,10 +15,33 @@ namespace PPCast {
         ) const = 0;
     };
 
+    /////////////////////////////
+    // Materials for debugging //
+    /////////////////////////////
+
     class MaterialNormal: public Material {
     public:
         bool scatter(glm::vec4&, glm::vec3&, const glm::vec4&, const HitInfo&) const override;
     };
+
+    class MaterialReflDir: public Material {
+    public:
+        MaterialReflDir() {}
+        bool scatter(glm::vec4&, glm::vec3&, const glm::vec4&, const HitInfo&) const override;
+    };
+
+    class MaterialRefrDir: public Material {
+    protected:
+        float m_refractiveIndex;
+    
+    public:
+        MaterialRefrDir(const float refractiveIndex) : m_refractiveIndex(refractiveIndex) {}
+        bool scatter(glm::vec4&, glm::vec3&, const glm::vec4&, const HitInfo&) const override;
+    };
+
+    //////////////////////
+    // Actual materials //
+    //////////////////////
 
     class MaterialDiffuse: public Material {
     protected:

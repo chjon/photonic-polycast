@@ -34,8 +34,8 @@ namespace PPCast {
             , m_tRange(tRange)
         {}
 
-        const glm::vec4 origin   () const { return m_origin; }
-        const glm::vec4 direction() const { return m_direction; }
+        const glm::vec4& origin   () const { return m_origin; }
+        const glm::vec4& direction() const { return m_direction; }
         const Interval<float>& interval() const { return m_tRange; }
 
         const glm::vec4 at(const float t) const { return m_origin + t * m_direction; }

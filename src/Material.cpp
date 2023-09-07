@@ -12,6 +12,47 @@ bool MaterialNormal::scatter(
     return false;
 }
 
+static inline glm::vec4 reflect(const glm::vec4& directionIn, const glm::vec4& normal) {
+    return directionIn - 2.f * glm::dot(directionIn, normal) * glm::normalize(normal);
+}
+
+static inline glm::vec4 refract(const glm::vec4& uv, const glm::vec4& n, const float r) {
+    const float cos_theta    = glm::min(glm::dot(-uv, n), 1.f);
+    glm::vec4 r_out_perp     = r * (uv + cos_theta*n);
+    glm::vec4 r_out_parallel = -glm::sqrt(glm::abs(1.f - glm::dot(r_out_perp, r_out_perp))) * n;
+    return r_out_perp + r_out_parallel;
+}
+
+bool MaterialReflDir::scatter(
+    glm::vec4& directionOut,
+    glm::vec3& attenuation,
+    const glm::vec4& directionIn,
+    const HitInfo& hitInfo
+) const {
+    directionOut = reflect(directionIn, hitInfo.normal);
+    attenuation = 0.5f * (glm::normalize(directionOut.xyz()) + glm::vec3(1));
+    return false;
+}
+
+bool MaterialRefrDir::scatter(
+    glm::vec4& directionOut,
+    glm::vec3& attenuation,
+    const glm::vec4& directionIn,
+    const HitInfo& hitInfo
+) const {
+    const glm::vec4 unitDirIn = glm::normalize(directionIn);
+    const glm::vec4 unitNormal = glm::normalize(hitInfo.normal);
+    const float c = glm::min(glm::dot(-unitDirIn, unitNormal), 1.f);
+    const float s = glm::sqrt(1.f - c*c);
+
+    // Decide whether to reflect or refract
+    const float refractionRatio = (hitInfo.hitOutside) ? (1.f / m_refractiveIndex) : m_refractiveIndex;    
+    if (refractionRatio * s > 1.0) directionOut = reflect(unitDirIn, unitNormal);
+    else                           directionOut = refract(unitDirIn, unitNormal, refractionRatio);
+    attenuation = 0.5f * (glm::normalize(directionOut.xyz()) + glm::vec3(1));
+    return false;
+}
+
 bool MaterialDiffuse::scatter(
     glm::vec4& directionOut,
     glm::vec3& attenuation,
@@ -34,17 +75,6 @@ bool MaterialLambertian::scatter(
     if (glm::dot(directionOut, directionOut) < 1e-8) directionOut = unitNormal;
     attenuation = m_attenuation;
     return true;
-}
-
-static inline glm::vec4 reflect(const glm::vec4& directionIn, const glm::vec4& normal) {
-    return directionIn - 2.f * glm::dot(directionIn, normal) * glm::normalize(normal);
-}
-
-static inline glm::vec4 refract(const glm::vec4& uv, const glm::vec4& n, const float r) {
-    const float cos_theta    = glm::min(glm::dot(-uv, n), 1.f);
-    glm::vec4 r_out_perp     = r * (uv + cos_theta*n);
-    glm::vec4 r_out_parallel = -glm::sqrt(glm::abs(1.f - glm::dot(r_out_perp, r_out_perp))) * n;
-    return r_out_perp + r_out_parallel;
 }
 
 bool MaterialMetal::scatter(

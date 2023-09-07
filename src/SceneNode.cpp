@@ -11,9 +11,10 @@ bool GeometryNode::getIntersection(HitInfo& hitInfo, const Ray& r) const {
 
     // Record HitInfo in original coordinates
     hitInfo.hitPoint   = r.at(hitInfo.t);
-    const glm::vec4 outwardNormal = glm::normalize(hitInfo.hitPoint - transform * glm::vec4(0, 0, 0, 1));
-    hitInfo.hitOutside = glm::dot(r.direction(), outwardNormal) < 0.f;
-    hitInfo.normal     = hitInfo.hitOutside ? outwardNormal : -outwardNormal;
+    const glm::vec3 outwardNormal3 = glm::normalize(glm::vec3(glm::transpose(invtransform) * hitInfo.normal));
+    const glm::vec4 outwardNormal4 = glm::vec4(outwardNormal3, 0);
+    hitInfo.hitOutside = glm::dot(r.direction(), outwardNormal4) < 0.f;
+    hitInfo.normal     = hitInfo.hitOutside ? outwardNormal4 : -outwardNormal4;
     hitInfo.material   = material;
     assert(hitInfo.material != nullptr);
 

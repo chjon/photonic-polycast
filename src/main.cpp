@@ -17,6 +17,10 @@ static UIntOption   opt_seed   ("seed"     , "random seed"                      
 
 static std::vector<GeometryNode> makeScene() {
     // Set up materials
+    auto normalMat     = std::make_shared<MaterialNormal >();
+    auto reflectionMat = std::make_shared<MaterialReflDir>();
+    auto refractionMat = std::make_shared<MaterialRefrDir>(1.5f);
+
     auto diffuseYellow = std::make_shared<MaterialDiffuse   >(glm::vec3(0.8, 0.8, 0.0));
     auto diffuseRed    = std::make_shared<MaterialDiffuse   >(glm::vec3(0.7, 0.3, 0.3));
     auto diffuseGrey   = std::make_shared<MaterialDiffuse   >(glm::vec3(0.5, 0.5, 0.5));
@@ -26,7 +30,6 @@ static std::vector<GeometryNode> makeScene() {
     auto metalSilver   = std::make_shared<MaterialMetal     >(glm::vec3(0.9, 0.9, 0.9));
     auto metalFuzz     = std::make_shared<MaterialMetal     >(glm::vec3(0.8, 0.6, 0.2), 0.3f);
     auto glass         = std::make_shared<MaterialRefractive>(glm::vec3(1.0, 1.0, 1.0), 1.5f);
-    auto normalMat     = std::make_shared<MaterialNormal    >();
 
     // Generate scene
     std::vector<GeometryNode> scene;
@@ -34,6 +37,12 @@ static std::vector<GeometryNode> makeScene() {
         case 0:
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, normalMat)); scene.back()
                 .scale(0.5);
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, refractionMat)); scene.back()
+                .scale(0.5)
+                .translate({-1.0, 0, 0});
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, reflectionMat)); scene.back()
+                .scale(0.5)
+                .translate({+1.0, 0, 0});
             break;
         case 1:
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, diffuseGrey)); scene.back()
@@ -63,7 +72,7 @@ static std::vector<GeometryNode> makeScene() {
                 .translate({+1.0, 0, 0});
             break;
         case 4:
-            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, diffuseYellow)); scene.back()
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, lambertYellow)); scene.back()
                 .scale(100.f)
                 .translate({0, -100.5, 0});
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, lambertRed)); scene.back()
@@ -81,7 +90,7 @@ static std::vector<GeometryNode> makeScene() {
         case 5:
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
                 .scale(0.5)
-                .translate({0, 0, 1.2});
+                .translate({0, 0, 0.8});
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, normalMat)); scene.back()
                 .scale(0.5)
                 .translate({0, 0, -1.0});
@@ -92,6 +101,26 @@ static std::vector<GeometryNode> makeScene() {
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, normalMat)); scene.back()
                 .scale(0.5)
                 .translate({0, 0, -2.0});
+            break;
+        case 7:
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, normalMat)); scene.back()
+                .scale(0.5)
+                .translate({1, 0, -3});
+            scene.push_back(GeometryNode(Geometry::Primitive::Cube, metalSilver)); scene.back()
+                .scale(glm::vec3(0.2f, 4.f, 4.f))
+                .translate({-2.0, 0, 0})
+                .rotateY(-glm::radians(45.f))
+                .translate({0, 0, -3});
+            scene.push_back(GeometryNode(Geometry::Primitive::Cube, metalSilver)); scene.back()
+                .scale(glm::vec3(4.f, 0.2f, 4.f))
+                .translate({0, -2.0, 0.0})
+                .rotateY(-glm::radians(45.f))
+                .translate({0, 0, -3});
+            scene.push_back(GeometryNode(Geometry::Primitive::Cube, metalSilver)); scene.back()
+                .scale(glm::vec3(4.f, 4.f, 0.2f))
+                .translate({0, 0, -2.0})
+                .rotateY(-glm::radians(45.f))
+                .translate({0, 0, -3});
             break;
         default:
             break;
