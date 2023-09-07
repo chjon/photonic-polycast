@@ -32,7 +32,10 @@ static inline bool intersectCubePlane(float& t, const glm::vec3& n, const Ray& r
     const glm::vec3 d(r.direction());
     const glm::vec3 u = n.yzx();
     const glm::vec3 v = n.zxy();
-    const glm::vec3 coeffs = glm::inverse(glm::mat3(u, v, d)) * (o - n);
+    const glm::mat3 uvd = glm::mat3(u, v, d);
+    const float determinant = glm::determinant(uvd);
+    if (glm::abs(determinant) < 1e-8) return false;
+    const glm::vec3 coeffs = glm::inverse(uvd) * (o - n);
     const glm::vec3 abscoeffs = glm::abs(coeffs);
     if (abscoeffs.x > 1 || abscoeffs.y > 1 || !r.interval().contains(-coeffs.z)) return false;
     t = -coeffs.z;
