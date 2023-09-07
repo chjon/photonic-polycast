@@ -1,36 +1,49 @@
 CWD = $(shell pwd)
 
+DEBUGMODE      = -g
+LANGVERSION    = -std=c++17
+DEPGENERATION  = -MMD -MP
+OPTIMIZATION   = -O3
+SYSTEMINCLUDES = lib /usr/local/cuda-12.2/bin/../targets/x86_64-linux/include/
+COMPILERFLAGS  = $(DEBUGMODE) $(LANGVERSION) $(DEPGENERATION) $(OPTIMIZATION) $(addprefix -isystem ,$(SYSTEMINCLUDES))
+
 CPP = g++
-CPPFLAGS = -g -std=c++17 -MMD -MP
-CPPFLAGS += -O3
-CPPFLAGS += -Wall -Wextra -Werror -Wshadow -Wconversion -Wunreachable-code
-CPPFLAGS += -isystem lib
-LDFLAGS  = `libpng-config --ldflags` 
+CPPWARNS = -Wall -Wextra -Werror -Wshadow -Wconversion -Wunreachable-code
+CPPFLAGS = $(COMPILERFLAGS) $(CPPWARNS)
+
+CU = nvcc
+CUFLAGS = $(COMPILERFLAGS)
+
+LDFLAGS = `libpng-config --ldflags`
 
 SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
 TARGET = ppcast
 
-SRCS = $(wildcard $(SRC_DIR)/*.cpp)
-OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
-DEPS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.d)
+CPPSRCS = $(wildcard $(SRC_DIR)/*.cpp)
+CUSRCS  = $(wildcard $(SRC_DIR)/*.cu)
+CPPOBJS = $(CPPSRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+CUOBJS  = $(CUSRCS:$(SRC_DIR)/%.cu=$(OBJ_DIR)/%.o)
+DEPS    = $(CPPSRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.d) $(CUSRCS:$(SRC_DIR)/%.cu=$(OBJ_DIR)/%.d)
 
 .PHONY: all clean info
 
 # Compile main program by default
-all: info $(TARGET)
+all: $(TARGET)
 
 clean:
 	rm -rf $(BIN_DIR)
 	rm -rf $(OBJ_DIR)
 
-info:
-	@echo "Compiling with flags $(CPPFLAGS)"
+info: $(CPPSRCS) $(CUSRCS)
+	@echo "Compiling with flags: $(COMPILERFLAGS)"
+	@echo "Using C++ warnings: $(CPPWARNS)"
 
 # Compile and link target binary
-$(TARGET): $(OBJ_DIR) $(OBJS) $(BIN_DIR)
-	$(CPP) -o $(BIN_DIR)/$(TARGET) $(OBJS) $(LDFLAGS)
+$(TARGET): $(OBJ_DIR) $(CPPOBJS) $(CUOBJS) $(BIN_DIR)
+	@echo "Linking with flags: $(LDFLAGS)"
+	@$(CU) -o $(BIN_DIR)/$(TARGET) $(CPPOBJS) $(CUOBJS) $(LDFLAGS)
 
 # Create directory for dependency and object files
 $(OBJ_DIR):
@@ -41,8 +54,12 @@ $(BIN_DIR):
 	@mkdir -p $(BIN_DIR)
 
 # Compile objects
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+$(CPPOBJS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
 	@echo "$(SRC_DIR)/$*.cpp -> $@"
 	@$(CPP) $(CPPFLAGS) -o $@ -c $(SRC_DIR)/$*.cpp
+
+$(CUOBJS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cu
+	@echo "$(SRC_DIR)/$*.cu -> $@"
+	@$(CU) $(CUFLAGS) -o $(OBJ_DIR)/$*.o -c $(SRC_DIR)/$*.cu
 
 -include $(DEPS)

@@ -6,6 +6,8 @@
 
 using namespace PPCast;
 
+extern int mainCUDA();
+
 // Options
 static BoolOption   opt_usegpu ("usegpu"   , "whether to use the GPU for rendering"    , false);
 static UIntOption   opt_img_w  ("img-w"    , "the width of the image in pixels"        , 128);
@@ -144,11 +146,15 @@ int main(int argc, char *const *argv) {
     // Set up scene
     std::vector<GeometryNode> scene = makeScene();
 
-    // Generate image via raytracing
-    png::image image = cam.render(scene, *opt_img_w, *opt_img_h);
+    if (*opt_usegpu) {
+        return mainCUDA();
+    } else {
+        // Generate image via raytracing
+        png::image image = cam.render(scene, *opt_img_w, *opt_img_h);
 
-    // Output image
-    if (!(*opt_outfile).empty()) image.write(*opt_outfile);
+        // Output image
+        if (!(*opt_outfile).empty()) image.write(*opt_outfile);
+    }
 
     return 0;
 }
