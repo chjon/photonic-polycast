@@ -114,7 +114,7 @@ Option::Option(const std::string& name, const std::string& desc, int hasArg)
     , m_hasArg(hasArg)
 {
     Options::options.push_back(this);
-};
+}
 
 int BoolOption::parse(const char* arg) {
     if (arg == nullptr) {

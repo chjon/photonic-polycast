@@ -8,7 +8,7 @@ SYSTEMINCLUDES = lib /usr/local/cuda-12.2/bin/../targets/x86_64-linux/include/
 COMPILERFLAGS  = $(DEBUGMODE) $(LANGVERSION) $(DEPGENERATION) $(OPTIMIZATION) $(addprefix -isystem ,$(SYSTEMINCLUDES))
 
 CPP = g++
-CPPWARNS = -Wall -Wextra -Werror -Wshadow -Wconversion -Wunreachable-code
+CPPWARNS = -Wall -Wextra -Werror -Wshadow -Wconversion -pedantic
 CPPFLAGS = $(COMPILERFLAGS) $(CPPWARNS)
 
 CU = nvcc
@@ -41,7 +41,7 @@ info: $(CPPSRCS) $(CUSRCS)
 	@echo "Using C++ warnings: $(CPPWARNS)"
 
 # Compile and link target binary
-$(TARGET): $(OBJ_DIR) $(CPPOBJS) $(CUOBJS) $(BIN_DIR)
+$(TARGET): info $(OBJ_DIR) $(CPPOBJS) $(CUOBJS) $(BIN_DIR)
 	@echo "Linking with flags: $(LDFLAGS)"
 	@$(CU) -o $(BIN_DIR)/$(TARGET) $(CPPOBJS) $(CUOBJS) $(LDFLAGS)
 
