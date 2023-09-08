@@ -6,12 +6,16 @@
 
 using namespace PPCast;
 
-static FloatOption opt_cam_fovy  ("cam-fovy"   , "the camera's y-axis FOV in degrees",  90.0f);
-static UIntOption  opt_raysPerPx ("rays-per-px", "number of rays to cast per pixel"  ,     10);
-static UIntOption  opt_maxBounces("max-bounces", "maximum number of ray bounces"     ,      5);
+static FloatOption opt_vfov      ("vfov"       , "the camera's vertical FOV in degrees" , 90.0f);
+static FloatOption opt_dofAngle  ("dof-angle"  , "the camera's defocus angle in degrees",  0.0f);
+static FloatOption opt_focalDist ("focal-dist" , "the camera's focal distance"          ,  1.0f);
+static UIntOption  opt_raysPerPx ("rays-per-px", "number of rays to cast per pixel"     ,    10);
+static UIntOption  opt_maxBounces("max-bounces", "maximum number of ray bounces"        ,     5);
 
 Camera::Camera()
-    : fovy      (*opt_cam_fovy  )
+    : vfov      (*opt_vfov  )
+    , dofAngle  (*opt_dofAngle  )
+    , focalDist (*opt_focalDist )
     , raysPerPx (*opt_raysPerPx )
     , maxBounces(*opt_maxBounces)
 {}
@@ -62,20 +66,27 @@ glm::vec3 Camera::raycast(const Ray& ray, Interval<float>&& tRange, const World&
 }
 
 Ray Camera::generateRay(uint32_t x, uint32_t y) const {
-    // Compute direction vector in viewspace
-    glm::vec3 rayDirection =
+    // Compute origin point in viewspace
+    glm::vec3 rayOrigin = {0, 0, 0}; 
+
+    // Perturb the origin point
+    rayOrigin += m_defocusRadius * glm::vec3(randomInUnitSphere<2>(), 0);
+
+    // Compute the pixel sample position in the viewspace focal plane
+    glm::vec3 pixelSample =
         m_pixel_topLeft +
         (static_cast<float>(x) * m_pixel_dx) +
         (static_cast<float>(y) * m_pixel_dy);
     
-    // Perturb the direction vector
-    const float randomX = randomFloat() - 0.5f;
-    const float randomY = randomFloat() - 0.5f;
-    rayDirection += randomX * m_pixel_dx + randomY * m_pixel_dy;
+    // Perturb the pixel sample position
+    pixelSample += (m_pixel_dx + m_pixel_dy) * glm::vec3(randomFloatVector<2>() - 0.5f * glm::vec2(1), 0);
+
+    // Compute the pixel sample position in the worldspace focal plane
+    glm::vec4 worldspacePixelSample = m_v2w * glm::vec4(pixelSample, 1);
 
     // Return ray in worldspace
-    const glm::vec4 worldspaceRayOrigin = m_v2w * glm::vec4(0, 0, 0, 1);
-    const glm::vec4 worldspaceRayDir    = glm::normalize(m_v2w * glm::vec4(rayDirection, 0));
+    const glm::vec4 worldspaceRayOrigin = m_v2w * glm::vec4(rayOrigin, 1);
+    const glm::vec4 worldspaceRayDir    = glm::normalize(worldspacePixelSample - worldspaceRayOrigin);
     return Ray(worldspaceRayOrigin, worldspaceRayDir);
 }
 
@@ -85,15 +96,17 @@ void Camera::initialize(uint32_t w, uint32_t h) {
 
     // Compute viewport params
     const float     aspectRatio      = static_cast<float>(w) / static_cast<float>(h);
-    const float     focalLength      = 0.5f / glm::tan(glm::radians(0.5f * fovy));
-    const glm::vec3 viewport_x       = glm::vec3(aspectRatio, 0, 0);
-    const glm::vec3 viewport_y       = glm::vec3(0, -1, 0);
-    const glm::vec3 viewport_topLeft = -glm::vec3(0, 0, focalLength) - 0.5f * (viewport_x + viewport_y);
+    const float     viewport_h       = 2 * glm::tan(glm::radians(0.5f * vfov));
+    const float     viewport_w       = aspectRatio * viewport_h;
+    const glm::vec3 viewport_x       = focalDist * glm::vec3(viewport_w, 0, 0);
+    const glm::vec3 viewport_y       = focalDist * glm::vec3(0, -viewport_h, 0);
+    const glm::vec3 viewport_topLeft = focalDist * glm::vec3(0, 0, -1) - 0.5f * (viewport_x + viewport_y);
 
     m_pixel_dx      = viewport_x / static_cast<float>(width);
     m_pixel_dy      = viewport_y / static_cast<float>(height);
     m_pixel_topLeft = viewport_topLeft + 0.5f * (m_pixel_dx + m_pixel_dy);
     m_v2w           = glm::inverse(glm::lookAt(pos, centre, up));
+    m_defocusRadius = focalDist * glm::tan(glm::radians(0.5f * dofAngle));
 }
 
 glm::vec3 Camera::renderPixel(uint32_t x, uint32_t y, const World& scene) const {

@@ -18,7 +18,12 @@ static UIntOption   opt_verb   ("verb"     , "verbosity (0 = none, 1 = less, 2 =
 static UIntOption   opt_scene  ("testscene", "test scene"                              , 0);
 static UIntOption   opt_seed   ("seed"     , "random seed"                             , 0xDECAFBAD);
 
-static World makeScene() {
+static World makeScene(Camera& cam) {
+    // Default camera position and orientation
+    cam.pos    = {0, 0, 1};
+    cam.centre = {0, 0, 0};
+    cam.up     = {0, 1, 0};
+
     // Set up materials
     auto normalMat     = std::make_shared<MaterialNormal >();
     auto reflectionMat = std::make_shared<MaterialReflDir>();
@@ -125,6 +130,25 @@ static World makeScene() {
                 .rotateY(-glm::radians(45.f))
                 .translate({0, 0, -3});
             break;
+        case 8:
+            cam.pos    = {-2, 2,  2};
+            cam.centre = { 0, 0,  0};
+            cam.up     = { 0, 1,  0};
+
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, lambertYellow)); scene.back()
+                .scale(100.f)
+                .translate({0, -100.5, 0});
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, lambertRed)); scene.back()
+                .scale(0.5f);
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
+                .scale(0.5f)
+                .translate({-1.0, 0, 0});
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, std::make_shared<MaterialRefractive>(glm::vec3(1.0, 1.0, 1.0), 1.f/1.5f))); scene.back()
+                .scale(0.40f)
+                .translate({-1.0, 0, 0});
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, metalFuzz)); scene.back()
+                .scale(0.5f)
+                .translate({+1.0, 0, 0});
         default:
             break;
     }
@@ -138,14 +162,9 @@ int main(int argc, char *const *argv) {
     if (*opt_verb >= 1) Options::printConfig(std::cout);
     srand(*opt_seed);
 
-    // Set up camera
+    // Set up camera and scene
     Camera cam;
-    cam.pos    = {0, 0, 1};
-    cam.centre = {0, 0, 0};
-    cam.up     = {0, 1, 0};
-    
-    // Set up scene
-    World world = makeScene();
+    World world = makeScene(cam);
 
     // Save current camera parameters for raytracing
     cam.initialize(*opt_img_w, *opt_img_h);

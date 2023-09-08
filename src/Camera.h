@@ -16,6 +16,7 @@ namespace PPCast {
         glm::vec3 m_pixel_dy;
         glm::vec3 m_pixel_topLeft;
         glm::mat4 m_v2w;
+        float     m_defocusRadius;
 
         Ray generateRay(uint32_t x, uint32_t y) const;
         glm::vec3 renderPixel(uint32_t x, uint32_t y, const World& scene) const;
@@ -28,7 +29,9 @@ namespace PPCast {
         glm::vec3 up;
 
         // Camera settings
-        float    fovy;
+        float    vfov;
+        float    dofAngle;
+        float    focalDist;
 
         // Image dimensions
         uint32_t width;
