@@ -3,6 +3,7 @@
 #include "Material.h"
 #include "Options.h"
 #include "SceneNode.h"
+#include "World.h"
 
 using namespace PPCast;
 
@@ -17,7 +18,7 @@ static UIntOption   opt_verb   ("verb"     , "verbosity (0 = none, 1 = less, 2 =
 static UIntOption   opt_scene  ("testscene", "test scene"                              , 0);
 static UIntOption   opt_seed   ("seed"     , "random seed"                             , 0xDECAFBAD);
 
-static std::vector<GeometryNode> makeScene() {
+static World makeScene() {
     // Set up materials
     auto normalMat     = std::make_shared<MaterialNormal >();
     auto reflectionMat = std::make_shared<MaterialReflDir>();
@@ -128,7 +129,7 @@ static std::vector<GeometryNode> makeScene() {
             break;
     }
 
-    return scene;
+    return World(std::move(scene));
 }
 
 int main(int argc, char *const *argv) {
@@ -144,7 +145,7 @@ int main(int argc, char *const *argv) {
     cam.up     = {0, 1, 0};
     
     // Set up scene
-    std::vector<GeometryNode> scene = makeScene();
+    World world = makeScene();
 
     // Save current camera parameters for raytracing
     cam.initialize(*opt_img_w, *opt_img_h);
@@ -153,7 +154,7 @@ int main(int argc, char *const *argv) {
         return mainCUDA();
     } else {
         // Generate image via raytracing
-        png::image image = cam.renderImage(scene);
+        png::image image = cam.renderImage(world);
 
         // Output image
         if (!(*opt_outfile).empty()) image.write(*opt_outfile);

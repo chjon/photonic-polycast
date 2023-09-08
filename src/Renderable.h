@@ -8,9 +8,6 @@ namespace PPCast {
     class Material;
     class Renderable {
     public:
-        std::shared_ptr<Material> material;
-        Renderable(const std::shared_ptr<Material>& mat) : material(mat) {}
-
         virtual bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const = 0;
     };
 }

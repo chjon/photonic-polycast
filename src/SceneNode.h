@@ -53,13 +53,14 @@ namespace PPCast {
 
     class GeometryNode: public SceneNode, public Renderable {
     private:
+        Geometry::Primitive m_primitive;
 
     public:
-        Geometry::Primitive m_primitive;
+        std::shared_ptr<Material> material;
         GeometryNode(Geometry::Primitive primitive, const std::shared_ptr<Material>& mat)
             : SceneNode()
-            , Renderable(mat)
             , m_primitive(primitive)
+            , material(mat)
         {}
 
         virtual bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const override;

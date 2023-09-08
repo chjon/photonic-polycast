@@ -2,6 +2,7 @@
 #include "Material.h"
 #include "Options.h"
 #include "Ray.h"
+#include "World.h"
 
 using namespace PPCast;
 
@@ -31,21 +32,14 @@ static glm::vec3 getSkyboxColour(const glm::vec4& direction) {
     return (1.f - a) * skyBottomColour + a * skyTopColour;
 }
 
-static glm::vec3 raycast(const Ray& ray, Interval<float>&& tRange, const std::vector<GeometryNode>& scene, unsigned int maxDepth) {
+glm::vec3 Camera::raycast(const Ray& ray, Interval<float>&& tRange, const World& world, unsigned int maxDepth) {
     Ray currentRay = ray;
     glm::vec3 totalAttenuation(1);
 
     while (maxDepth--) {
         // Check if ray intersects with geometry
         HitInfo hitInfo;
-        bool hit = false;
-        for (const GeometryNode& node : scene) {
-            HitInfo tmpHitInfo;
-            if (node.getIntersection(tmpHitInfo, currentRay, tRange)) {
-                hit = true;
-                if (tmpHitInfo.t < hitInfo.t) hitInfo = tmpHitInfo;
-            }
-        }
+        const bool hit = world.getIntersection(hitInfo, currentRay, tRange);
 
         // Return the sky colour if there is no intersection
         if (!hit) return totalAttenuation * getSkyboxColour(currentRay.direction());
@@ -102,7 +96,7 @@ void Camera::initialize(uint32_t w, uint32_t h) {
     m_v2w           = glm::inverse(glm::lookAt(pos, centre, up));
 }
 
-glm::vec3 Camera::renderPixel(uint32_t x, uint32_t y, const std::vector<GeometryNode>& scene) const {
+glm::vec3 Camera::renderPixel(uint32_t x, uint32_t y, const World& scene) const {
     // Perform raytracing
     glm::vec3 total(0);
     Interval<float> tRange(0.f, std::numeric_limits<float>::infinity(), true, false);
@@ -113,7 +107,7 @@ glm::vec3 Camera::renderPixel(uint32_t x, uint32_t y, const std::vector<Geometry
     return total / static_cast<float>(raysPerPx);
 }
 
-png::image<png::rgb_pixel> Camera::renderImage(const std::vector<GeometryNode>& scene) const {
+png::image<png::rgb_pixel> Camera::renderImage(const World& scene) const {
     png::image<png::rgb_pixel> image(width, height);
     for (png::uint_32 y = 0; y < height; ++y) {
         std::clog << "\rRendering scanlines: " << (y + 1) << " / " << height << " " << std::flush;
