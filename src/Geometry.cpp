@@ -2,7 +2,7 @@
 
 using namespace PPCast;
 
-bool Geometry::intersectSphere(HitInfo& hitInfo, const Ray& r) {
+bool Geometry::intersectSphere(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) {
     // Solving a*t^2 + 2*b*t + c = 0
     const glm::vec3 o = glm::vec3(r.origin());
     const glm::vec3 d = glm::vec3(r.direction());
@@ -10,24 +10,24 @@ bool Geometry::intersectSphere(HitInfo& hitInfo, const Ray& r) {
     const float     b = glm::dot(o, d);
     const float     c = glm::dot(o, o) - 1;
 
-    // Find nearest root
+    // Check whether a root exists
     const float discriminant = b * b - a * c;
     if (discriminant < 0) return false;
+
+    // Find the nearest root
     const float sqrt_discriminant = glm::sqrt(discriminant);
-    float root = (-b - sqrt_discriminant) / a;
-    if (!r.interval().contains(root)) {
-        root = (-b + sqrt_discriminant) / a;
-        if (!r.interval().contains(root)) return false;
-    }
+    float root;
+    if (!tRange.contains(root = ((-b - sqrt_discriminant) / a)) &&
+        !tRange.contains(root = ((-b + sqrt_discriminant) / a))
+    ) return false;
 
     // Update hit info
     hitInfo.t      = root;
     hitInfo.normal = glm::vec4(r.at(root).xyz(), 0);
-
     return true;
 }
 
-static inline bool intersectCubePlane(float& t, const glm::vec3& n, const Ray& r) {
+static inline bool intersectCubePlane(float& t, const glm::vec3& n, const Ray& r, const Interval<float>& tRange) {
     const glm::vec3 o(r.origin());
     const glm::vec3 d(r.direction());
     const glm::vec3 u = n.yzx();
@@ -37,12 +37,12 @@ static inline bool intersectCubePlane(float& t, const glm::vec3& n, const Ray& r
     if (glm::abs(determinant) < 1e-8) return false;
     const glm::vec3 coeffs = glm::inverse(uvd) * (o - n);
     const glm::vec3 abscoeffs = glm::abs(coeffs);
-    if (abscoeffs.x > 1 || abscoeffs.y > 1 || !r.interval().contains(-coeffs.z)) return false;
+    if (abscoeffs.x > 1 || abscoeffs.y > 1 || !tRange.contains(-coeffs.z)) return false;
     t = -coeffs.z;
     return true;
 }
 
-bool Geometry::intersectCube(HitInfo& hitInfo, const Ray& r) {
+bool Geometry::intersectCube(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) {
     const std::vector<glm::vec3> normals = {
         {+1, 0, 0}, {0, +1, 0}, {0, 0, +1},
         {-1, 0, 0}, {0, -1, 0}, {0, 0, -1},
@@ -51,7 +51,7 @@ bool Geometry::intersectCube(HitInfo& hitInfo, const Ray& r) {
     bool intersected = false;
     for (const glm::vec3& n : normals) {
         float tmpT = std::numeric_limits<float>::infinity();
-        if (!intersectCubePlane(tmpT, n, r)) continue;
+        if (!intersectCubePlane(tmpT, n, r, tRange)) continue;
         if (tmpT < hitInfo.t) {
             hitInfo.normal = glm::vec4(n, 0);
             hitInfo.t      = tmpT;
@@ -62,11 +62,11 @@ bool Geometry::intersectCube(HitInfo& hitInfo, const Ray& r) {
     return intersected;
 }
 
-bool Geometry::intersect(HitInfo& hitInfo, Primitive p, const Ray& r) {
+bool Geometry::intersect(HitInfo& hitInfo, Primitive p, const Ray& r, const Interval<float>& tRange) {
     // Check for intersection
     switch (p) {
-        case Primitive::Sphere: return intersectSphere(hitInfo, r);
-        case Primitive::Cube  : return intersectCube  (hitInfo, r);
+        case Primitive::Sphere: return intersectSphere(hitInfo, r, tRange);
+        case Primitive::Cube  : return intersectCube  (hitInfo, r, tRange);
         default: return false;
     }
 }

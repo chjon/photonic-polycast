@@ -35,7 +35,7 @@ static glm::vec3 getSkyboxColour(const glm::vec4& direction) {
     return (1.f - a) * skyBottomColour + a * skyTopColour;
 }
 
-static glm::vec3 raycast(const std::vector<GeometryNode>& scene, const Ray& ray, unsigned int maxDepth) {
+static glm::vec3 raycast(const Ray& ray, Interval<float>&& tRange, const std::vector<GeometryNode>& scene, unsigned int maxDepth) {
     Ray currentRay = ray;
     glm::vec3 totalAttenuation(1);
 
@@ -45,7 +45,7 @@ static glm::vec3 raycast(const std::vector<GeometryNode>& scene, const Ray& ray,
         bool hit = false;
         for (const GeometryNode& node : scene) {
             HitInfo tmpHitInfo;
-            if (node.getIntersection(tmpHitInfo, currentRay)) {
+            if (node.getIntersection(tmpHitInfo, currentRay, tRange)) {
                 hit = true;
                 if (tmpHitInfo.t < hitInfo.t) hitInfo = tmpHitInfo;
             }
@@ -63,7 +63,8 @@ static glm::vec3 raycast(const std::vector<GeometryNode>& scene, const Ray& ray,
         if (!generatedRay) return totalAttenuation * attenuation;
 
         // Cast the generated ray
-        currentRay = Ray(hitInfo.hitPoint, glm::normalize(scatterDirection), Interval<float>(1e-3f, std::numeric_limits<float>::infinity(), true, false));
+        tRange.min = 1e-3f;
+        currentRay = Ray(hitInfo.hitPoint, glm::normalize(scatterDirection));
         totalAttenuation = totalAttenuation * attenuation;
     }
 
@@ -91,13 +92,13 @@ png::image<png::rgb_pixel> Camera::render(const std::vector<GeometryNode>& scene
             
             // Perform raytracing
             glm::vec3 colour(0);
+            Interval<float> tRange(0.f, std::numeric_limits<float>::infinity(), true, false);
             if (m_jitter == 0) {
                 const Ray ray(
                     vinv * glm::vec4(0, 0, 0, 1),
-                    glm::normalize(vinv * glm::vec4(rayDirection, 0)),
-                    Interval<float>(0.f, std::numeric_limits<float>::infinity(), true, false)
+                    glm::normalize(vinv * glm::vec4(rayDirection, 0))
                 );
-                colour = raycast(scene, ray, *opt_max_depth);
+                colour = raycast(ray, std::move(tRange), scene, *opt_max_depth);
             } else {
                 for (uint32_t i = 0; i < m_jitter; ++i) {
                     const float randomX = randomFloat() - 0.5f;
@@ -105,10 +106,9 @@ png::image<png::rgb_pixel> Camera::render(const std::vector<GeometryNode>& scene
                     rayDirection = curr_pixel + randomX * pixel_dx + randomY * pixel_dy;
                     const Ray ray(
                         vinv * glm::vec4(0, 0, 0, 1),
-                        glm::normalize(vinv * glm::vec4(rayDirection, 0)),
-                        Interval<float>(0.f, std::numeric_limits<float>::infinity(), true, false)
+                        glm::normalize(vinv * glm::vec4(rayDirection, 0))
                     );
-                    colour = colour + raycast(scene, ray, *opt_max_depth);
+                    colour = colour + raycast(ray, std::move(tRange), scene, *opt_max_depth);
                 }
 
                 colour = colour / static_cast<float>(m_jitter);

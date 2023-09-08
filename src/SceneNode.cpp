@@ -2,12 +2,12 @@
 
 using namespace PPCast;
 
-bool GeometryNode::getIntersection(HitInfo& hitInfo, const Ray& r) const {
+bool GeometryNode::getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const {
     // Transform ray into local coordinates
-    Ray localRay(invtransform * r.origin(), invtransform * r.direction(), r.interval());
+    Ray localRay(invtransform * r.origin(), invtransform * r.direction());
 
     // Compute intersection
-    if (!Geometry::intersect(hitInfo, m_primitive, localRay)) return false;
+    if (!Geometry::intersect(hitInfo, m_primitive, localRay, tRange)) return false;
 
     // Record HitInfo in original coordinates
     hitInfo.hitPoint   = r.at(hitInfo.t);

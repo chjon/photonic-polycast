@@ -19,24 +19,20 @@ namespace PPCast {
     private:
         glm::vec4 m_origin;
         glm::vec4 m_direction;
-        Interval<float> m_tRange;
 
     public:
-        Ray(const glm::vec3& origin, const glm::vec3& direction, const Interval<float>& tRange)
+        Ray(const glm::vec3& origin, const glm::vec3& direction)
             : m_origin   (origin, 1)
             , m_direction(direction, 0)
-            , m_tRange(tRange)
         {}
         
-        Ray(const glm::vec4& origin, const glm::vec4& direction, const Interval<float>& tRange)
+        Ray(const glm::vec4& origin, const glm::vec4& direction)
             : m_origin   (origin)
             , m_direction(direction)
-            , m_tRange(tRange)
         {}
 
         const glm::vec4& origin   () const { return m_origin; }
         const glm::vec4& direction() const { return m_direction; }
-        const Interval<float>& interval() const { return m_tRange; }
 
         const glm::vec4 at(const float t) const { return m_origin + t * m_direction; }
 

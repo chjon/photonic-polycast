@@ -62,7 +62,7 @@ namespace PPCast {
             , m_primitive(primitive)
         {}
 
-        virtual bool getIntersection(HitInfo& hitInfo, const Ray& r) const override;
+        virtual bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const override;
     };
 }
 
