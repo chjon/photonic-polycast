@@ -28,3 +28,6 @@ bool CudaDeviceVec<T>::copyToHost(T* hostData, unsigned int size) const {
 
 // Explicit class initialization
 template class CudaDeviceVec<float>;
+template class CudaDeviceVec<float2>;
+template class CudaDeviceVec<float3>;
+template class CudaDeviceVec<float4>;

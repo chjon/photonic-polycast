@@ -2,6 +2,7 @@
 #define PPCAST_CAMERA_H
 
 #include <png++/png.hpp>
+#include "CameraKernel.cuh"
 #include "Common.h"
 #include "Ray.h"
 #include "SceneNode.h"
@@ -21,6 +22,8 @@ namespace PPCast {
         Ray generateRay(uint32_t x, uint32_t y) const;
         glm::vec3 renderPixel(uint32_t x, uint32_t y, const World& scene) const;
         static glm::vec3 raycast(const Ray& ray, Interval<float>&& tRange, const World& world, unsigned int maxDepth);
+
+        png::image<png::rgb_pixel> renderImageCPU(const World& scene) const;
 
     public:
         // Camera position and orientation

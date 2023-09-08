@@ -6,6 +6,7 @@
 
 using namespace PPCast;
 
+static BoolOption  opt_usegpu    ("usegpu"     , "whether to use the GPU for rendering" , false);
 static FloatOption opt_vfov      ("vfov"       , "the camera's vertical FOV in degrees" , 90.0f);
 static FloatOption opt_dofAngle  ("dof-angle"  , "the camera's defocus angle in degrees",  0.0f);
 static FloatOption opt_focalDist ("focal-dist" , "the camera's focal distance"          ,  1.0f);
@@ -13,7 +14,7 @@ static UIntOption  opt_raysPerPx ("rays-per-px", "number of rays to cast per pix
 static UIntOption  opt_maxBounces("max-bounces", "maximum number of ray bounces"        ,     5);
 
 Camera::Camera()
-    : vfov      (*opt_vfov  )
+    : vfov      (*opt_vfov      )
     , dofAngle  (*opt_dofAngle  )
     , focalDist (*opt_focalDist )
     , raysPerPx (*opt_raysPerPx )
@@ -22,6 +23,15 @@ Camera::Camera()
 
 static png::rgb_pixel vec2Pixel(const glm::vec3& v) {
     const glm::vec3 colour = 255.99f * glm::sqrt(v);
+    return png::rgb_pixel(
+        static_cast<unsigned char>(colour.r),
+        static_cast<unsigned char>(colour.g),
+        static_cast<unsigned char>(colour.b)
+    );
+}
+
+static png::rgb_pixel vec2Pixel(const float* v) {
+    const glm::vec3 colour = 255.99f * glm::sqrt(glm::vec3(v[0], v[1], v[2]));
     return png::rgb_pixel(
         static_cast<unsigned char>(colour.r),
         static_cast<unsigned char>(colour.g),
@@ -120,15 +130,35 @@ glm::vec3 Camera::renderPixel(uint32_t x, uint32_t y, const World& scene) const 
     return total / static_cast<float>(raysPerPx);
 }
 
-png::image<png::rgb_pixel> Camera::renderImage(const World& scene) const {
+png::image<png::rgb_pixel> Camera::renderImageCPU(const World& scene) const {
     png::image<png::rgb_pixel> image(width, height);
-    for (png::uint_32 y = 0; y < height; ++y) {
+    for (uint32_t y = 0; y < height; ++y) {
         std::clog << "\rRendering scanlines: " << (y + 1) << " / " << height << " " << std::flush;
-        for (png::uint_32 x = 0; x < width; ++x) {
+        for (uint32_t x = 0; x < width; ++x) {
             image[y][x] = vec2Pixel(renderPixel(x, y, scene));
         }
     }
     std::clog << "\rRendering completed: " << height << " / " << height << std::flush << std::endl;
 
     return image;
+}
+
+png::image<png::rgb_pixel> Camera::renderImage(const World& scene) const {
+    if (*opt_usegpu) {
+        float* frameBuffer = new float[width * height * 3];
+        renderImageGPU(frameBuffer, width, height);
+
+        // Save data to image
+        png::image<png::rgb_pixel> image(width, height);
+        for (uint32_t y = 0; y < height; ++y) {
+            for (uint32_t x = 0; x < width; ++x) {
+                image[y][x] = vec2Pixel(&frameBuffer[(y * width + x) * 3]);
+            }
+        }
+
+        delete[] frameBuffer;
+        return image;
+    } else {
+        return renderImageCPU(scene);
+    }
 }

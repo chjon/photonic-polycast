@@ -10,7 +10,6 @@ using namespace PPCast;
 extern int mainCUDA();
 
 // Options
-static BoolOption   opt_usegpu ("usegpu"   , "whether to use the GPU for rendering"    , false);
 static UIntOption   opt_img_w  ("img-w"    , "the width of the image in pixels"        , 128);
 static UIntOption   opt_img_h  ("img-h"    , "the height of the image in pixels"       , 128);
 static StringOption opt_outfile("outfile"  , "the name of the output file"             , "img/test.png");
@@ -169,15 +168,11 @@ int main(int argc, char *const *argv) {
     // Save current camera parameters for raytracing
     cam.initialize(*opt_img_w, *opt_img_h);
 
-    if (*opt_usegpu) {
-        return mainCUDA();
-    } else {
-        // Generate image via raytracing
-        png::image image = cam.renderImage(world);
+    // Generate image via raytracing
+    png::image image = cam.renderImage(world);
 
-        // Output image
-        if (!(*opt_outfile).empty()) image.write(*opt_outfile);
-    }
+    // Output image
+    if (!(*opt_outfile).empty()) image.write(*opt_outfile);
 
     return 0;
 }
