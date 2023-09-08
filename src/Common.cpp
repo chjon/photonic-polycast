@@ -8,15 +8,8 @@ float randomFloat(float min, float max) {
     return min + (max - min) * randomFloat();
 }
 
-glm::vec3 randomUnitVector() {
-    while (true) {
-        const glm::vec3 candidate = glm::vec3(randomFloat(-1,1), randomFloat(-1,1), randomFloat(-1,1));
-        if (glm::dot(candidate, candidate) < 1.f) return glm::normalize(candidate);
-    }
-}
-
 glm::vec4 randomOnHemisphere(const glm::vec4& normal) {
-    glm::vec4 v = glm::vec4(randomUnitVector(), 0);
+    glm::vec4 v = glm::vec4(randomUnitVector<3>(), 0);
     return (glm::dot(v, normal) < 0) ? -v : v;
 }
 

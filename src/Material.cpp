@@ -71,7 +71,7 @@ bool MaterialLambertian::scatter(
     const HitInfo& hitInfo
 ) const {
     glm::vec4 unitNormal = glm::normalize(hitInfo.normal);
-    directionOut = unitNormal + glm::vec4(randomUnitVector(), 0);
+    directionOut = unitNormal + glm::vec4(randomUnitVector<3>(), 0);
     if (glm::dot(directionOut, directionOut) < 1e-8) directionOut = unitNormal;
     attenuation = m_attenuation;
     return true;
@@ -84,7 +84,7 @@ bool MaterialMetal::scatter(
     const HitInfo& hitInfo
 ) const {
     const glm::vec4 reflected = reflect(directionIn, hitInfo.normal);
-    directionOut = reflected + glm::vec4(m_fuzzFactor * randomUnitVector(), 0);
+    directionOut = reflected + glm::vec4(m_fuzzFactor * randomUnitVector<3>(), 0);
     attenuation = m_attenuation;
     return true;
 }
