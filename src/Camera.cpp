@@ -28,32 +28,46 @@ static png::rgb_pixel vec2Pixel(const glm::vec3& v) {
     );
 }
 
-static glm::vec3 raycast(const std::vector<GeometryNode>& scene, const Ray& ray, unsigned int maxDepth) {
-    if (maxDepth == 0) return glm::vec3(0);
+static glm::vec3 getSkyboxColour(const glm::vec4& direction) {
+    constexpr glm::vec3 skyTopColour    = glm::vec3(0.5, 0.7, 1.0);
+    constexpr glm::vec3 skyBottomColour = glm::vec3(1.0, 1.0, 1.0);
+    const float a = 0.5f * (glm::normalize(direction).y + 1.f);
+    return (1.f - a) * skyBottomColour + a * skyTopColour;
+}
 
-    HitInfo hitInfo;
-    bool hit = false;
-    for (const GeometryNode& node : scene) {
-        HitInfo tmpHitInfo;
-        if (node.getIntersection(tmpHitInfo, ray)) {
-            hit = true;
-            if (tmpHitInfo.t < hitInfo.t) hitInfo = tmpHitInfo;
+static glm::vec3 raycast(const std::vector<GeometryNode>& scene, const Ray& ray, unsigned int maxDepth) {
+    Ray currentRay = ray;
+    glm::vec3 totalAttenuation(1);
+
+    while (maxDepth--) {
+        // Check if ray intersects with geometry
+        HitInfo hitInfo;
+        bool hit = false;
+        for (const GeometryNode& node : scene) {
+            HitInfo tmpHitInfo;
+            if (node.getIntersection(tmpHitInfo, currentRay)) {
+                hit = true;
+                if (tmpHitInfo.t < hitInfo.t) hitInfo = tmpHitInfo;
+            }
         }
-    }
-    
-    if (hit) {
+
+        // Return the sky colour if there is no intersection
+        if (!hit) return totalAttenuation * getSkyboxColour(currentRay.direction());
+        
+        // Generate a reflected or transmitted ray
         glm::vec4 scatterDirection;
         glm::vec3 attenuation;
-        if (hitInfo.material->scatter(scatterDirection, attenuation, ray.direction(), hitInfo)) {
-            Ray bounceRay(hitInfo.hitPoint, glm::normalize(scatterDirection), Interval<float>(1e-3f, std::numeric_limits<float>::infinity(), true, false));
-            return attenuation * raycast(scene, bounceRay, maxDepth - 1);
-        } else {
-            return attenuation;
-        }
+        const bool generatedRay = hitInfo.material->scatter(scatterDirection, attenuation, currentRay.direction(), hitInfo);
+        
+        // Return the material colour if there is no generated ray
+        if (!generatedRay) return totalAttenuation * attenuation;
+
+        // Cast the generated ray
+        currentRay = Ray(hitInfo.hitPoint, glm::normalize(scatterDirection), Interval<float>(1e-3f, std::numeric_limits<float>::infinity(), true, false));
+        totalAttenuation = totalAttenuation * attenuation;
     }
 
-    const float a = 0.5f * (glm::normalize(ray.direction()).y + 1.f);
-    return (1.f - a) * glm::vec3(1.f) + a * glm::vec3(0.5, 0.7, 1.0);
+    return glm::vec3(0);
 }
 
 png::image<png::rgb_pixel> Camera::render(const std::vector<GeometryNode>& scene, uint32_t width, uint32_t height) const {
