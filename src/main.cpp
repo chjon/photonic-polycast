@@ -138,19 +138,22 @@ int main(int argc, char *const *argv) {
     srand(*opt_seed);
 
     // Set up camera
-    const glm::vec3 pos   (0, 0, 1);
-    const glm::vec3 centre(0, 0, 0);
-    const glm::vec3 up    (0, 1, 0);
-    const Camera cam(pos, centre, up);
+    Camera cam;
+    cam.pos    = {0, 0, 1};
+    cam.centre = {0, 0, 0};
+    cam.up     = {0, 1, 0};
     
     // Set up scene
     std::vector<GeometryNode> scene = makeScene();
+
+    // Save current camera parameters for raytracing
+    cam.initialize(*opt_img_w, *opt_img_h);
 
     if (*opt_usegpu) {
         return mainCUDA();
     } else {
         // Generate image via raytracing
-        png::image image = cam.render(scene, *opt_img_w, *opt_img_h);
+        png::image image = cam.renderImage(scene);
 
         // Output image
         if (!(*opt_outfile).empty()) image.write(*opt_outfile);

@@ -3,32 +3,47 @@
 
 #include <png++/png.hpp>
 #include "Common.h"
+#include "Ray.h"
 #include "SceneNode.h"
 
 namespace PPCast {
     class Camera {
     private:
-        // Camera position and orientation
-        glm::vec3 m_pos;
-        glm::vec3 m_centre;
-        glm::vec3 m_up;
+        // Derived values -- cached for generating rays
+        glm::vec3 m_pixel_dx;
+        glm::vec3 m_pixel_dy;
+        glm::vec3 m_pixel_topLeft;
+        glm::mat4 m_v2w;
 
-        // Camera settings
-        float m_fovy;
-        float m_aspect;
-
-        uint32_t m_jitter;
-
-        glm::mat4x4 getView() const { return glm::lookAt(m_pos, m_centre, m_up); }
+        Ray generateRay(uint32_t x, uint32_t y) const;
+        glm::vec3 renderPixel(uint32_t x, uint32_t y, const std::vector<GeometryNode>& scene) const;
 
     public:
+        // Camera position and orientation
+        glm::vec3 pos;
+        glm::vec3 centre;
+        glm::vec3 up;
+
+        // Camera settings
+        float    fovy;
+
+        // Image dimensions
+        uint32_t width;
+        uint32_t height;
+
+        // Image quality
+        uint32_t raysPerPx;
+        uint32_t maxBounces;
+
         /**
          * @brief Default camera constructor -- constructs camera using commandline options
          * 
          */
-        Camera(const glm::vec3& pos, const glm::vec3& centre, const glm::vec3& up);
+        Camera();
 
-        png::image<png::rgb_pixel> render(const std::vector<GeometryNode>& scene, uint32_t width, uint32_t height) const;
+        void initialize(uint32_t width, uint32_t height);
+
+        png::image<png::rgb_pixel> renderImage(const std::vector<GeometryNode>& scene) const;
     };
 }
 

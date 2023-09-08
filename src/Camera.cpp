@@ -5,18 +5,14 @@
 
 using namespace PPCast;
 
-static FloatOption opt_cam_fovy   ("cam-fovy"  , "the camera's y-axis FOV in degrees"                 ,  90.0f);
-static FloatOption opt_cam_aspect ("cam-aspect", "the camera's aspect ratio (x / y)"                  ,   1.0f);
-static UIntOption  opt_jitter     ("jitter"    , "number of rays to cast per pixel (0 for no jitter)" ,      0);
-static UIntOption  opt_max_depth  ("max-depth" , "maximum recursion depth"                            ,      5);
+static FloatOption opt_cam_fovy  ("cam-fovy"   , "the camera's y-axis FOV in degrees",  90.0f);
+static UIntOption  opt_raysPerPx ("rays-per-px", "number of rays to cast per pixel"  ,     10);
+static UIntOption  opt_maxBounces("max-bounces", "maximum number of ray bounces"     ,      5);
 
-Camera::Camera(const glm::vec3& pos, const glm::vec3& centre, const glm::vec3& up)
-    : m_pos   (pos)
-    , m_centre(centre)
-    , m_up    (up)
-    , m_fovy  (*opt_cam_fovy)
-    , m_aspect(*opt_cam_aspect)
-    , m_jitter(*opt_jitter)
+Camera::Camera()
+    : fovy      (*opt_cam_fovy  )
+    , raysPerPx (*opt_raysPerPx )
+    , maxBounces(*opt_maxBounces)
 {}
 
 static png::rgb_pixel vec2Pixel(const glm::vec3& v) {
@@ -71,50 +67,58 @@ static glm::vec3 raycast(const Ray& ray, Interval<float>&& tRange, const std::ve
     return glm::vec3(0);
 }
 
-png::image<png::rgb_pixel> Camera::render(const std::vector<GeometryNode>& scene, uint32_t width, uint32_t height) const {
-    // Compute viewport params
-    const double    focalLength      = 0.5 / glm::tan(glm::radians(0.5 * m_fovy));
-    const glm::vec3 viewport_x       = glm::vec3(1 * m_aspect,  0, 0);
-    const glm::vec3 viewport_y       = glm::vec3(0, -1, 0);
-    const glm::vec3 pixel_dx         = viewport_x / static_cast<float>(width);
-    const glm::vec3 pixel_dy         = viewport_y / static_cast<float>(height);
-    const glm::vec3 viewport_topLeft = -glm::vec3(0, 0, focalLength) - 0.5f * (viewport_x + viewport_y);
-    const glm::vec3 pixel_topLeft    = viewport_topLeft + 0.5f * (pixel_dx + pixel_dy);
-    const glm::mat4 vinv             = glm::inverse(getView());
+Ray Camera::generateRay(uint32_t x, uint32_t y) const {
+    // Compute direction vector in viewspace
+    glm::vec3 rayDirection =
+        m_pixel_topLeft +
+        (static_cast<float>(x) * m_pixel_dx) +
+        (static_cast<float>(y) * m_pixel_dy);
+    
+    // Perturb the direction vector
+    const float randomX = randomFloat() - 0.5f;
+    const float randomY = randomFloat() - 0.5f;
+    rayDirection += randomX * m_pixel_dx + randomY * m_pixel_dy;
 
-    // Actually render the image
+    // Return ray in worldspace
+    const glm::vec4 worldspaceRayOrigin = m_v2w * glm::vec4(0, 0, 0, 1);
+    const glm::vec4 worldspaceRayDir    = glm::normalize(m_v2w * glm::vec4(rayDirection, 0));
+    return Ray(worldspaceRayOrigin, worldspaceRayDir);
+}
+
+void Camera::initialize(uint32_t w, uint32_t h) {
+    width  = w;
+    height = h;
+
+    // Compute viewport params
+    const float     aspectRatio      = static_cast<float>(w) / static_cast<float>(h);
+    const float     focalLength      = 0.5f / glm::tan(glm::radians(0.5f * fovy));
+    const glm::vec3 viewport_x       = glm::vec3(aspectRatio, 0, 0);
+    const glm::vec3 viewport_y       = glm::vec3(0, -1, 0);
+    const glm::vec3 viewport_topLeft = -glm::vec3(0, 0, focalLength) - 0.5f * (viewport_x + viewport_y);
+
+    m_pixel_dx      = viewport_x / static_cast<float>(width);
+    m_pixel_dy      = viewport_y / static_cast<float>(height);
+    m_pixel_topLeft = viewport_topLeft + 0.5f * (m_pixel_dx + m_pixel_dy);
+    m_v2w           = glm::inverse(glm::lookAt(pos, centre, up));
+}
+
+glm::vec3 Camera::renderPixel(uint32_t x, uint32_t y, const std::vector<GeometryNode>& scene) const {
+    // Perform raytracing
+    glm::vec3 total(0);
+    Interval<float> tRange(0.f, std::numeric_limits<float>::infinity(), true, false);
+    for (uint32_t i = 0; i < raysPerPx; ++i) {
+        const Ray ray = generateRay(x, y);
+        total += raycast(ray, std::move(tRange), scene, maxBounces);
+    }
+    return total / static_cast<float>(raysPerPx);
+}
+
+png::image<png::rgb_pixel> Camera::renderImage(const std::vector<GeometryNode>& scene) const {
     png::image<png::rgb_pixel> image(width, height);
     for (png::uint_32 y = 0; y < height; ++y) {
         std::clog << "\rRendering scanlines: " << (y + 1) << " / " << height << " " << std::flush;
         for (png::uint_32 x = 0; x < width; ++x) {
-            const glm::vec3 curr_pixel = pixel_topLeft + (static_cast<float>(x) * pixel_dx) + (static_cast<float>(y) * pixel_dy);
-            glm::vec3 rayDirection = curr_pixel;
-            
-            // Perform raytracing
-            glm::vec3 colour(0);
-            Interval<float> tRange(0.f, std::numeric_limits<float>::infinity(), true, false);
-            if (m_jitter == 0) {
-                const Ray ray(
-                    vinv * glm::vec4(0, 0, 0, 1),
-                    glm::normalize(vinv * glm::vec4(rayDirection, 0))
-                );
-                colour = raycast(ray, std::move(tRange), scene, *opt_max_depth);
-            } else {
-                for (uint32_t i = 0; i < m_jitter; ++i) {
-                    const float randomX = randomFloat() - 0.5f;
-                    const float randomY = randomFloat() - 0.5f;
-                    rayDirection = curr_pixel + randomX * pixel_dx + randomY * pixel_dy;
-                    const Ray ray(
-                        vinv * glm::vec4(0, 0, 0, 1),
-                        glm::normalize(vinv * glm::vec4(rayDirection, 0))
-                    );
-                    colour = colour + raycast(ray, std::move(tRange), scene, *opt_max_depth);
-                }
-
-                colour = colour / static_cast<float>(m_jitter);
-            }
-
-            image[y][x] = vec2Pixel(colour);
+            image[y][x] = vec2Pixel(renderPixel(x, y, scene));
         }
     }
     std::clog << "\rRendering completed: " << height << " / " << height << std::flush << std::endl;
