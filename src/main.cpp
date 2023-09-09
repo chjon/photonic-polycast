@@ -10,6 +10,7 @@ using namespace PPCast;
 
 extern int mainCUDA();
 uint32_t MaterialID::numMaterials = 0;
+const MaterialID MaterialID::INVALID = MaterialID(UINT32_MAX);
 
 // Options
 static UIntOption   opt_img_w  ("img-w"    , "the width of the image in pixels"        , 128);
@@ -53,6 +54,7 @@ static void makeScene(
     MaterialPtr metalFuzz     = vecInsert(mats, MaterialMetal(glm::vec3(0.8, 0.6, 0.2), 0.3f));
     
     MaterialPtr glass         = vecInsert(mats, MaterialRefractive(glm::vec3(1.0, 1.0, 1.0), 1.5f));
+    MaterialPtr invglass      = vecInsert(mats, MaterialRefractive(glm::vec3(1.0, 1.0, 1.0), 1.f/1.5f));
 
     // Generate scene
     switch (*opt_scene) {
@@ -102,7 +104,7 @@ static void makeScene(
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
                 .scale(0.5f)
                 .translate({-1.0, 0, 0});
-            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, std::make_shared<MaterialRefractive>(glm::vec3(1.0, 1.0, 1.0), 1.f/1.5f))); scene.back()
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, invglass)); scene.back()
                 .scale(0.40f)
                 .translate({-1.0, 0, 0});
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, metalFuzz)); scene.back()

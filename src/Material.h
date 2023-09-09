@@ -10,6 +10,8 @@ namespace PPCast {
     public:
         const MaterialID id;
 
+        Material() : id(MaterialID::next()) {}
+
         virtual bool scatter(
             glm::vec4& directionOut,
             glm::vec3& attenuation,

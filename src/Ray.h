@@ -13,7 +13,7 @@ namespace PPCast {
         glm::vec4 hitPoint;
         glm::vec4 normal;
         bool hitOutside;
-        MaterialID materialID;
+        MaterialID materialID = MaterialID::INVALID;
     };
 
     class Ray {

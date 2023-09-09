@@ -44,6 +44,7 @@ glm::vec3 Camera::raycast(const Ray& ray, Interval<float>&& tRange, const World&
         // Generate a reflected or transmitted ray
         glm::vec4 scatterDirection;
         glm::vec3 attenuation;
+        assert(hitInfo.materialID != MaterialID::INVALID);
         const auto material = world.getMaterials()[static_cast<uint32_t>(hitInfo.materialID)];
         const bool generatedRay = material->scatter(scatterDirection, attenuation, currentRay.direction(), hitInfo);
         
