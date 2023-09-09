@@ -44,7 +44,8 @@ glm::vec3 Camera::raycast(const Ray& ray, Interval<float>&& tRange, const World&
         // Generate a reflected or transmitted ray
         glm::vec4 scatterDirection;
         glm::vec3 attenuation;
-        const bool generatedRay = hitInfo.material->scatter(scatterDirection, attenuation, currentRay.direction(), hitInfo);
+        const auto material = world.getMaterials()[static_cast<uint32_t>(hitInfo.materialID)];
+        const bool generatedRay = material->scatter(scatterDirection, attenuation, currentRay.direction(), hitInfo);
         
         // Return the material colour if there is no generated ray
         if (!generatedRay) return totalAttenuation * attenuation;
@@ -58,32 +59,7 @@ glm::vec3 Camera::raycast(const Ray& ray, Interval<float>&& tRange, const World&
     return glm::vec3(0);
 }
 
-Ray Camera::generateRay(uint32_t x, uint32_t y) const {
-    // Compute origin point in viewspace
-    glm::vec3 rayOrigin = {0, 0, 0}; 
-
-    // Perturb the origin point
-    rayOrigin += m_defocusRadius * glm::vec3(randomInUnitSphere<2>(), 0);
-
-    // Compute the pixel sample position in the viewspace focal plane
-    glm::vec3 pixelSample =
-        m_pixel_topLeft +
-        (static_cast<float>(x) * m_pixel_dx) +
-        (static_cast<float>(y) * m_pixel_dy);
-    
-    // Perturb the pixel sample position
-    pixelSample += (m_pixel_dx + m_pixel_dy) * glm::vec3(randomFloatVector<2>() - 0.5f * glm::vec2(1), 0);
-
-    // Compute the pixel sample position in the worldspace focal plane
-    glm::vec4 worldspacePixelSample = m_v2w * glm::vec4(pixelSample, 1);
-
-    // Return ray in worldspace
-    const glm::vec4 worldspaceRayOrigin = m_v2w * glm::vec4(rayOrigin, 1);
-    const glm::vec4 worldspaceRayDir    = glm::normalize(worldspacePixelSample - worldspaceRayOrigin);
-    return Ray(worldspaceRayOrigin, worldspaceRayDir);
-}
-
-void Camera::initialize(uint32_t w, uint32_t h) {
+__host__ void Camera::initialize(uint32_t w, uint32_t h) {
     width  = w;
     height = h;
 
@@ -126,6 +102,6 @@ bool Camera::renderImageCPU(Image& image, const World& scene) const {
 }
 
 bool Camera::renderImage(Image& image, const World& scene) const {
-    if (*opt_usegpu) return renderImageGPU(image);
+    if (*opt_usegpu) return renderImageGPU(image, scene);
     else             return renderImageCPU(image, scene);
 }

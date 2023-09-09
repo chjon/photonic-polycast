@@ -2,7 +2,7 @@
 
 using namespace PPCast;
 
-bool Geometry::intersectSphere(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) {
+__host__ __device__ bool Geometry::intersectSphere(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) {
     // Solving a*t^2 + 2*b*t + c = 0
     const glm::vec3 o = glm::vec3(r.origin());
     const glm::vec3 d = glm::vec3(r.direction());
@@ -27,7 +27,7 @@ bool Geometry::intersectSphere(HitInfo& hitInfo, const Ray& r, const Interval<fl
     return true;
 }
 
-static inline bool intersectCubePlane(float& t, const glm::vec3& n, const Ray& r, const Interval<float>& tRange) {
+__host__ __device__ static inline bool intersectCubePlane(float& t, const glm::vec3& n, const Ray& r, const Interval<float>& tRange) {
     const glm::vec3 o(r.origin());
     const glm::vec3 d(r.direction());
     const glm::vec3 u = n.yzx();
@@ -42,7 +42,7 @@ static inline bool intersectCubePlane(float& t, const glm::vec3& n, const Ray& r
     return true;
 }
 
-bool Geometry::intersectCube(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) {
+__host__ __device__ bool Geometry::intersectCube(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) {
     const std::vector<glm::vec3> normals = {
         {+1, 0, 0}, {0, +1, 0}, {0, 0, +1},
         {-1, 0, 0}, {0, -1, 0}, {0, 0, -1},

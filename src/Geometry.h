@@ -12,9 +12,9 @@ namespace PPCast {
             Cube   = 1,
         };
     
-        static bool intersect      (HitInfo& hitInfo, Primitive p, const Ray& r, const Interval<float>& tRange);
-        static bool intersectSphere(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange);
-        static bool intersectCube  (HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange);
+        __host__ __device__ static bool intersect      (HitInfo& hitInfo, Primitive p, const Ray& r, const Interval<float>& tRange);
+        __host__ __device__ static bool intersectSphere(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange);
+        __host__ __device__ static bool intersectCube  (HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange);
     };
 }
 

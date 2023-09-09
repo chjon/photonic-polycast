@@ -2,7 +2,7 @@
 
 using namespace PPCast;
 
-bool GeometryNode::getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const {
+__host__ __device__ bool GeometryNode::getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const {
     // Transform ray into local coordinates
     Ray localRay(invtransform * r.origin(), invtransform * r.direction());
 
@@ -15,8 +15,7 @@ bool GeometryNode::getIntersection(HitInfo& hitInfo, const Ray& r, const Interva
     const glm::vec4 outwardNormal4 = glm::vec4(outwardNormal3, 0);
     hitInfo.hitOutside = glm::dot(r.direction(), outwardNormal4) < 0.f;
     hitInfo.normal     = hitInfo.hitOutside ? outwardNormal4 : -outwardNormal4;
-    hitInfo.material   = material;
-    assert(hitInfo.material != nullptr);
+    hitInfo.materialID = materialID;
 
     return true;
 }

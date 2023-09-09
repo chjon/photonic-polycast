@@ -8,7 +8,7 @@ namespace PPCast {
     class Material;
     class Renderable {
     public:
-        virtual bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const = 0;
+        __host__ __device__ virtual bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const = 0;
     };
 }
 

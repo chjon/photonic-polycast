@@ -18,12 +18,12 @@ namespace PPCast {
         glm::mat4 m_v2w;
         float     m_defocusRadius;
 
-        Ray generateRay(uint32_t x, uint32_t y) const;
+        __host__ __device__ Ray generateRay(uint32_t x, uint32_t y) const;
         glm::vec3 renderPixel(uint32_t x, uint32_t y, const World& scene) const;
         static glm::vec3 raycast(const Ray& ray, Interval<float>&& tRange, const World& world, unsigned int maxDepth);
 
         bool renderImageCPU(Image& image, const World& scene) const;
-        bool renderImageGPU(Image& image) const;
+        bool renderImageGPU(Image& image, const World& scene) const;
 
     public:
         // Camera position and orientation
@@ -51,7 +51,6 @@ namespace PPCast {
         Camera();
 
         void initialize(uint32_t width, uint32_t height);
-
         bool renderImage(Image& image, const World& scene) const;
     };
 }

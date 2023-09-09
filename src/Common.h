@@ -1,6 +1,12 @@
 #ifndef PPCAST_COMMON_H
 #define PPCAST_COMMON_H
 
+#ifndef __NVCC__
+    #define __host__
+    #define __device__
+    #define __global__
+#endif
+
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -15,10 +21,10 @@
 #include <vector>
 
 // Utils
-float randomFloat();
-float randomFloat(float min, float max);
+__host__ __device__ float randomFloat();
+__host__ __device__ float randomFloat(float min, float max);
 
-glm::vec4 randomOnHemisphere(const glm::vec4& normal);
+__host__ __device__ glm::vec4 randomOnHemisphere(const glm::vec4& normal);
 
 // Printing GLM vectors and matrices
 std::ostream& operator<<(std::ostream &os, const glm::vec2& v);
@@ -27,14 +33,15 @@ std::ostream& operator<<(std::ostream &os, const glm::vec4& v);
 std::ostream& operator<<(std::ostream &os, const glm::mat3& v);
 std::ostream& operator<<(std::ostream &os, const glm::mat4& v);
 
-template <uint8_t L> glm::vec<L, float, glm::packed_highp> randomFloatVector() {
+template <uint8_t L>
+__host__ __device__ glm::vec<L, float, glm::packed_highp> randomFloatVector() {
     glm::vec<L, float, glm::packed_highp> v;
     for (uint8_t i = 0; i < L; ++i) v[i] = randomFloat(-1.f, 1.f);
     return v;
 }
 
 template <uint8_t L>
-glm::vec<L, float, glm::packed_highp> randomInUnitSphere() {
+__host__ __device__ glm::vec<L, float, glm::packed_highp> randomInUnitSphere() {
     while (true) {
         const glm::vec<L, float, glm::packed_highp> candidate = randomFloatVector<L>();
         if (glm::dot(candidate, candidate) < 1.f) return candidate;
@@ -42,6 +49,8 @@ glm::vec<L, float, glm::packed_highp> randomInUnitSphere() {
 }
 
 template <uint8_t L>
-glm::vec<L, float, glm::packed_highp> randomUnitVector() { return glm::normalize(randomInUnitSphere<L>()); }
+__host__ __device__ glm::vec<L, float, glm::packed_highp> randomUnitVector() {
+    return glm::normalize(randomInUnitSphere<L>());
+}
 
 #endif

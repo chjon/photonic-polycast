@@ -1,14 +1,14 @@
 #include "Common.h"
 
-float randomFloat() {
+__host__ __device__ float randomFloat() {
     return static_cast<float>(rand()) / (static_cast<float>(RAND_MAX) + 1.f);
 }
 
-float randomFloat(float min, float max) {
+__host__ __device__ float randomFloat(float min, float max) {
     return min + (max - min) * randomFloat();
 }
 
-glm::vec4 randomOnHemisphere(const glm::vec4& normal) {
+__host__ __device__ glm::vec4 randomOnHemisphere(const glm::vec4& normal) {
     glm::vec4 v = glm::vec4(randomUnitVector<3>(), 0);
     return (glm::dot(v, normal) < 0) ? -v : v;
 }

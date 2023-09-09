@@ -1,6 +1,8 @@
 #ifndef PPCAST_CUDADEVICEVEC_H
 #define PPCAST_CUDADEVICEVEC_H
 
+#include "Common.h"
+
 namespace PPCast {
     template <typename T>
     class CudaDeviceVec {
@@ -9,6 +11,7 @@ namespace PPCast {
         unsigned int m_size;
     public:
         CudaDeviceVec(unsigned int size);
+        CudaDeviceVec(const std::vector<T>& data);
         CudaDeviceVec(const CudaDeviceVec&) = delete;
         CudaDeviceVec(CudaDeviceVec&&) = default;
         ~CudaDeviceVec();
@@ -22,6 +25,7 @@ namespace PPCast {
         bool copyToHost(T* hostData) const;
 
         T* get() const;
+        unsigned int size() const;
     };
 
     template <typename T>
@@ -31,7 +35,10 @@ namespace PPCast {
     inline bool CudaDeviceVec<T>::copyToHost(T* hostData) const { return copyToHost(hostData, m_size); }
 
     template <typename T>
-    inline T* CudaDeviceVec<T>::get() const { return m_data; }
+    inline T* CudaDeviceVec<T>::get() const { return (m_size > 0) ? (m_data) : (nullptr); }
+
+    template <typename T>
+    inline unsigned int CudaDeviceVec<T>::size() const { return m_size; }
 }
 
 #endif

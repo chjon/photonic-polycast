@@ -3,10 +3,13 @@
 
 #include "Common.h"
 #include "Ray.h"
+#include "Types.h"
 
 namespace PPCast {
     class Material {
     public:
+        const MaterialID id;
+
         virtual bool scatter(
             glm::vec4& directionOut,
             glm::vec3& attenuation,

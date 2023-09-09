@@ -2,7 +2,7 @@
 
 using namespace PPCast;
 
-bool World::getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const {
+__host__ __device__ bool World::getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const {
     bool hit = false;
     for (const GeometryNode& node : m_geometry) {
         HitInfo tmpHitInfo;

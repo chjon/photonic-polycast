@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "Interval.h"
+#include "Types.h"
 
 namespace PPCast {
     class Material;
@@ -12,7 +13,7 @@ namespace PPCast {
         glm::vec4 hitPoint;
         glm::vec4 normal;
         bool hitOutside;
-        std::shared_ptr<Material> material;
+        MaterialID materialID;
     };
 
     class Ray {
@@ -21,20 +22,20 @@ namespace PPCast {
         glm::vec4 m_direction;
 
     public:
-        Ray(const glm::vec3& origin, const glm::vec3& direction)
+        __host__ __device__ Ray(const glm::vec3& origin, const glm::vec3& direction)
             : m_origin   (origin, 1)
             , m_direction(direction, 0)
         {}
         
-        Ray(const glm::vec4& origin, const glm::vec4& direction)
+        __host__ __device__ Ray(const glm::vec4& origin, const glm::vec4& direction)
             : m_origin   (origin)
             , m_direction(direction)
         {}
 
-        const glm::vec4& origin   () const { return m_origin; }
-        const glm::vec4& direction() const { return m_direction; }
+        __host__ __device__ const glm::vec4& origin   () const { return m_origin; }
+        __host__ __device__ const glm::vec4& direction() const { return m_direction; }
 
-        const glm::vec4 at(const float t) const { return m_origin + t * m_direction; }
+        __host__ __device__ const glm::vec4 at(const float t) const { return m_origin + t * m_direction; }
 
     private:
         friend std::ostream& operator<<(std::ostream &os, const Ray& r) {

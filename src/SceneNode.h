@@ -2,8 +2,9 @@
 #define PPCAST_SCENENODE_H
 
 #include "Common.h"
-#include "Renderable.h"
 #include "Geometry.h"
+#include "Material.h"
+#include "Renderable.h"
 
 namespace PPCast {
     class SceneNode {
@@ -56,14 +57,21 @@ namespace PPCast {
         Geometry::Primitive m_primitive;
 
     public:
-        std::shared_ptr<Material> material;
-        GeometryNode(Geometry::Primitive primitive, const std::shared_ptr<Material>& mat)
+        MaterialID materialID;
+
+        GeometryNode(Geometry::Primitive primitive, std::shared_ptr<Material> material)
             : SceneNode()
             , m_primitive(primitive)
-            , material(mat)
+            , materialID(material->id)
         {}
 
-        virtual bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const override;
+        GeometryNode(Geometry::Primitive primitive, MaterialID matID)
+            : SceneNode()
+            , m_primitive(primitive)
+            , materialID(matID)
+        {}
+
+        __host__ __device__ virtual bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const override;
     };
 }
 

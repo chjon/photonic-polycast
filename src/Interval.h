@@ -2,6 +2,7 @@
 #define PPCAST_INTERVAL_H
 
 #include <algorithm>
+#include "Common.h"
 
 namespace PPCast {
     template <typename T>
@@ -12,14 +13,14 @@ namespace PPCast {
         bool minOpen;
         bool maxOpen;
 
-        Interval(T min_, T max_, bool minOpen_, bool maxOpen_)
+        __host__ __device__ Interval(T min_, T max_, bool minOpen_, bool maxOpen_)
             : min(std::min(min_, max_))
             , max(std::max(min_, max_))
             , minOpen(minOpen_)
             , maxOpen(maxOpen_)
         {}
 
-        bool contains(T val) const {
+        __host__ __device__ bool contains(T val) const {
             return !(
                 (val < min) ||
                 (val > max) ||
