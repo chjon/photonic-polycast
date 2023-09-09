@@ -1,5 +1,6 @@
-#include "CameraKernel.cuh"
+#include "Camera.h"
 #include "CudaDeviceVec.h"
+#include "Image.h"
 
 #define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
 void check_cuda(cudaError_t result, char const *const func, const char *const file, int const line) {
@@ -26,7 +27,7 @@ __global__ void render(float3 *frameBuffer, int width, int height) {
     };
 }
 
-void renderImageGPU(float *frameBuffer, unsigned int width, unsigned int height) {
+bool PPCast::Camera::renderImageGPU(Image& image) const {
     unsigned int numPixels = width * height;
     PPCast::CudaDeviceVec<float3> d_frameBuffer(numPixels);
     
@@ -42,5 +43,7 @@ void renderImageGPU(float *frameBuffer, unsigned int width, unsigned int height)
     // Copy image back to host
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaDeviceSynchronize());
-    d_frameBuffer.copyToHost(reinterpret_cast<float3*>(frameBuffer));
+    d_frameBuffer.copyToHost(reinterpret_cast<float3*>(image.data()));
+
+    return true;
 }

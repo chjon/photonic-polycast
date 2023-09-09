@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "Camera.h"
+#include "Image.h"
 #include "Material.h"
 #include "Options.h"
 #include "SceneNode.h"
@@ -169,7 +170,8 @@ int main(int argc, char *const *argv) {
     cam.initialize(*opt_img_w, *opt_img_h);
 
     // Generate image via raytracing
-    png::image image = cam.renderImage(world);
+    Image image(*opt_img_w, *opt_img_h);
+    cam.renderImage(image, world);
 
     // Output image
     if (!(*opt_outfile).empty()) image.write(*opt_outfile);

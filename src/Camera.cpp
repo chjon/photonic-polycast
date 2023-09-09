@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include "Image.h"
 #include "Material.h"
 #include "Options.h"
 #include "Ray.h"
@@ -20,24 +21,6 @@ Camera::Camera()
     , raysPerPx (*opt_raysPerPx )
     , maxBounces(*opt_maxBounces)
 {}
-
-static png::rgb_pixel vec2Pixel(const glm::vec3& v) {
-    const glm::vec3 colour = 255.99f * glm::sqrt(v);
-    return png::rgb_pixel(
-        static_cast<unsigned char>(colour.r),
-        static_cast<unsigned char>(colour.g),
-        static_cast<unsigned char>(colour.b)
-    );
-}
-
-static png::rgb_pixel vec2Pixel(const float* v) {
-    const glm::vec3 colour = 255.99f * glm::sqrt(glm::vec3(v[0], v[1], v[2]));
-    return png::rgb_pixel(
-        static_cast<unsigned char>(colour.r),
-        static_cast<unsigned char>(colour.g),
-        static_cast<unsigned char>(colour.b)
-    );
-}
 
 static glm::vec3 getSkyboxColour(const glm::vec4& direction) {
     constexpr glm::vec3 skyTopColour    = glm::vec3(0.5, 0.7, 1.0);
@@ -130,35 +113,19 @@ glm::vec3 Camera::renderPixel(uint32_t x, uint32_t y, const World& scene) const 
     return total / static_cast<float>(raysPerPx);
 }
 
-png::image<png::rgb_pixel> Camera::renderImageCPU(const World& scene) const {
-    png::image<png::rgb_pixel> image(width, height);
+bool Camera::renderImageCPU(Image& image, const World& scene) const {
     for (uint32_t y = 0; y < height; ++y) {
         std::clog << "\rRendering scanlines: " << (y + 1) << " / " << height << " " << std::flush;
         for (uint32_t x = 0; x < width; ++x) {
-            image[y][x] = vec2Pixel(renderPixel(x, y, scene));
+            image.get(x, y) = renderPixel(x, y, scene);
         }
     }
     std::clog << "\rRendering completed: " << height << " / " << height << std::flush << std::endl;
 
-    return image;
+    return true;
 }
 
-png::image<png::rgb_pixel> Camera::renderImage(const World& scene) const {
-    if (*opt_usegpu) {
-        float* frameBuffer = new float[width * height * 3];
-        renderImageGPU(frameBuffer, width, height);
-
-        // Save data to image
-        png::image<png::rgb_pixel> image(width, height);
-        for (uint32_t y = 0; y < height; ++y) {
-            for (uint32_t x = 0; x < width; ++x) {
-                image[y][x] = vec2Pixel(&frameBuffer[(y * width + x) * 3]);
-            }
-        }
-
-        delete[] frameBuffer;
-        return image;
-    } else {
-        return renderImageCPU(scene);
-    }
+bool Camera::renderImage(Image& image, const World& scene) const {
+    if (*opt_usegpu) return renderImageGPU(image);
+    else             return renderImageCPU(image, scene);
 }
