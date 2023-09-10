@@ -11,6 +11,9 @@ CPP = g++
 CPPWARNS = -Wall -Wextra -Werror -Wshadow -Wconversion -pedantic
 CPPFLAGS = $(COMPILERFLAGS) $(CPPWARNS)
 
+# CPP = nvcc
+# CPPFLAGS = $(COMPILERFLAGS)
+
 CU = nvcc
 CUFLAGS = $(COMPILERFLAGS)
 

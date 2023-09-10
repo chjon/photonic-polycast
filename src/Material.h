@@ -6,6 +6,7 @@
 #include "Types.h"
 
 namespace PPCast {
+    // Note: not using subclasses because the Material class needs to have constant size for array allocation
     enum MaterialType: uint32_t {
         NormalDir  = 0, // Draw normal vector
         ReflectDir = 1, // Draw reflection vector
