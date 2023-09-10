@@ -59,10 +59,10 @@ namespace PPCast {
     public:
         MaterialID materialID;
 
-        GeometryNode(Geometry::Primitive primitive, std::shared_ptr<Material> material)
+        GeometryNode(Geometry::Primitive primitive, const Material& material)
             : SceneNode()
             , m_primitive(primitive)
-            , materialID(material->id)
+            , materialID(material.id)
         {}
 
         GeometryNode(Geometry::Primitive primitive, MaterialID matID)

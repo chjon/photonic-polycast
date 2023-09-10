@@ -20,15 +20,15 @@ static UIntOption   opt_verb   ("verb"     , "verbosity (0 = none, 1 = less, 2 =
 static UIntOption   opt_scene  ("testscene", "test scene"                              , 0);
 static UIntOption   opt_seed   ("seed"     , "random seed"                             , 0xDECAFBAD);
 
-template <class T, class t>
-static inline std::shared_ptr<T> vecInsert(std::vector< std::shared_ptr<T> >& vec, t&& val) {
-    vec.push_back(std::make_shared<t>(std::move(val)));
+template <class T>
+static inline T& vecInsert(std::vector<T>& vec, T&& val) {
+    vec.push_back(std::move(val));
     return vec.back();
 }
 
 static void makeScene(
     Camera& cam,
-    std::vector<std::shared_ptr<Material>>& mats,
+    std::vector<Material>& mats,
     std::vector<GeometryNode>& scene
 ) {
     // Default camera position and orientation
@@ -37,24 +37,17 @@ static void makeScene(
     cam.up     = {0, 1, 0};
 
     // Set up materials
-    using MaterialPtr = std::shared_ptr<Material>;
-    MaterialPtr normalMat     = vecInsert(mats, MaterialNormal());
-    MaterialPtr reflectionMat = vecInsert(mats, MaterialReflDir());
-    MaterialPtr refractionMat = vecInsert(mats, MaterialRefrDir(1.5f));
-
-    MaterialPtr diffuseYellow = vecInsert(mats, MaterialDiffuse(glm::vec3(0.8, 0.8, 0.0)));
-    MaterialPtr diffuseRed    = vecInsert(mats, MaterialDiffuse(glm::vec3(0.7, 0.3, 0.3)));
-    MaterialPtr diffuseGrey   = vecInsert(mats, MaterialDiffuse(glm::vec3(0.5, 0.5, 0.5)));
-    
-    MaterialPtr lambertYellow = vecInsert(mats, MaterialLambertian(glm::vec3(0.8, 0.8, 0.0)));
-    MaterialPtr lambertRed    = vecInsert(mats, MaterialLambertian(glm::vec3(0.7, 0.3, 0.3)));
-    MaterialPtr lambertGrey   = vecInsert(mats, MaterialLambertian(glm::vec3(0.5, 0.5, 0.5)));
-    
-    MaterialPtr metalSilver   = vecInsert(mats, MaterialMetal(glm::vec3(0.9, 0.9, 0.9)));
-    MaterialPtr metalFuzz     = vecInsert(mats, MaterialMetal(glm::vec3(0.8, 0.6, 0.2), 0.3f));
-    
-    MaterialPtr glass         = vecInsert(mats, MaterialRefractive(glm::vec3(1.0, 1.0, 1.0), 1.5f));
-    MaterialPtr invglass      = vecInsert(mats, MaterialRefractive(glm::vec3(1.0, 1.0, 1.0), 1.f/1.5f));
+    Material normalMat     = vecInsert(mats, Material(MaterialType::NormalDir , {glm::vec3(1.0, 1.0, 1.0), 0.0f, 1.0f}));
+    Material reflectionMat = vecInsert(mats, Material(MaterialType::ReflectDir, {glm::vec3(1.0, 1.0, 1.0), 0.0f, 1.0f}));
+    Material refractionMat = vecInsert(mats, Material(MaterialType::RefractDir, {glm::vec3(1.0, 1.0, 1.0), 0.0f, 1.5f}));
+    Material diffuseGrey   = vecInsert(mats, Material(MaterialType::Diffuse,    {glm::vec3(0.5, 0.5, 0.5), 0.0f, 1.0f}));
+    Material lambertYellow = vecInsert(mats, Material(MaterialType::Lambertian, {glm::vec3(0.8, 0.8, 0.0), 0.0f, 1.0f}));
+    Material lambertRed    = vecInsert(mats, Material(MaterialType::Lambertian, {glm::vec3(0.7, 0.3, 0.3), 0.0f, 1.0f}));
+    Material lambertGrey   = vecInsert(mats, Material(MaterialType::Lambertian, {glm::vec3(0.5, 0.5, 0.5), 0.0f, 1.0f}));
+    Material metalSilver   = vecInsert(mats, Material(MaterialType::Reflective, {glm::vec3(0.9, 0.9, 0.9), 0.0f, 1.0f}));
+    Material metalFuzz     = vecInsert(mats, Material(MaterialType::Reflective, {glm::vec3(0.8, 0.6, 0.2), 0.3f, 1.0f}));
+    Material glass         = vecInsert(mats, Material(MaterialType::Refractive, {glm::vec3(1.0, 1.0, 1.0), 0.0f, 1.5f}));
+    Material invglass      = vecInsert(mats, Material(MaterialType::Refractive, {glm::vec3(1.0, 1.0, 1.0), 0.0f, 1.f/1.5f}));
 
     // Generate scene
     switch (*opt_scene) {
@@ -159,7 +152,7 @@ static void makeScene(
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
                 .scale(0.5f)
                 .translate({-1.0, 0, 0});
-            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, std::make_shared<MaterialRefractive>(glm::vec3(1.0, 1.0, 1.0), 1.f/1.5f))); scene.back()
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, invglass)); scene.back()
                 .scale(0.40f)
                 .translate({-1.0, 0, 0});
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, metalFuzz)); scene.back()
@@ -178,7 +171,7 @@ int main(int argc, char *const *argv) {
 
     // Set up camera and scene
     Camera cam;
-    std::vector<std::shared_ptr<Material>> materials;
+    std::vector<Material>     materials;
     std::vector<GeometryNode> geometry;
     makeScene(cam, materials, geometry);
     World world(std::move(materials), std::move(geometry));

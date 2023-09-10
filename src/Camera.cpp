@@ -45,8 +45,8 @@ glm::vec3 Camera::raycast(const Ray& ray, Interval<float>&& tRange, const World&
         glm::vec4 scatterDirection;
         glm::vec3 attenuation;
         assert(hitInfo.materialID != MaterialID::INVALID);
-        const auto material = world.getMaterials()[static_cast<uint32_t>(hitInfo.materialID)];
-        const bool generatedRay = material->scatter(scatterDirection, attenuation, currentRay.direction(), hitInfo);
+        const Material& material = world.getMaterials()[static_cast<uint32_t>(hitInfo.materialID)];
+        const bool generatedRay = material.scatter(scatterDirection, attenuation, currentRay.direction(), hitInfo);
         
         // Return the material colour if there is no generated ray
         if (!generatedRay) return totalAttenuation * attenuation;
