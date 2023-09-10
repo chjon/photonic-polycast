@@ -6,6 +6,8 @@
 #include "Types.h"
 
 namespace PPCast {
+    class RandomState;
+
     // Note: not using subclasses because the Material class needs to have constant size for array allocation
     enum MaterialType: uint32_t {
         NormalDir  = 0, // Draw normal vector
@@ -35,11 +37,12 @@ namespace PPCast {
             , data(matData)
         {}
 
-        bool scatter(
+        __host__ __device__ bool scatter(
             glm::vec4& directionOut,
             glm::vec3& attenuation,
             const glm::vec4& directionIn,
-            const HitInfo& hitInfo
+            const HitInfo& hitInfo,
+            RandomState& randomState
         ) const;
     };
 }

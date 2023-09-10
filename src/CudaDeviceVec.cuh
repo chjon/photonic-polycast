@@ -11,6 +11,7 @@ namespace PPCast {
         unsigned int m_size;
     public:
         CudaDeviceVec(unsigned int size);
+        CudaDeviceVec(const T& data);
         CudaDeviceVec(const std::vector<T>& data);
         CudaDeviceVec(const CudaDeviceVec&) = delete;
         CudaDeviceVec(CudaDeviceVec&&) = default;
@@ -31,9 +32,24 @@ namespace PPCast {
     template <typename T>
     CudaDeviceVec<T>::CudaDeviceVec(unsigned int size)
         : m_data(nullptr)
-        , m_size(size)
+        , m_size(0)
     {
-        if (cudaMalloc((void**)&m_data, sizeof(T) * m_size) != cudaSuccess) m_size = 0;
+        if (cudaMalloc((void**)&m_data, sizeof(T) * size) == cudaSuccess) m_size = size;
+    }
+
+    template <typename T>
+    CudaDeviceVec<T>::CudaDeviceVec(const T& data)
+        : m_data(nullptr)
+        , m_size(0)
+    {
+        if (cudaMalloc((void**)&m_data, sizeof(T)) != cudaSuccess) return;
+        
+        if (cudaMemcpy(m_data, &data, sizeof(T), cudaMemcpyHostToDevice) == cudaSuccess) {
+            m_size = 1;
+        } else {
+            cudaFree(m_data);
+            m_data = nullptr;
+        }
     }
 
     template <typename T>

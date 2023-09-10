@@ -8,24 +8,36 @@ namespace PPCast {
     template <typename T>
     class Interval {
     public:
-        T min;
-        T max;
+        T lower;
+        T upper;
         bool minOpen;
         bool maxOpen;
 
         __host__ __device__ Interval(T min_, T max_, bool minOpen_, bool maxOpen_)
-            : min(std::min(min_, max_))
-            , max(std::max(min_, max_))
+            : lower(
+                #ifdef __CUDA_ARCH__
+                min(min_, max_)
+                #else
+                std::min(min_, max_)                
+                #endif
+            )
+            , upper(
+                #ifdef __CUDA_ARCH__
+                max(min_, max_)
+                #else              
+                std::max(min_, max_)
+                #endif
+            )
             , minOpen(minOpen_)
             , maxOpen(maxOpen_)
         {}
 
         __host__ __device__ bool contains(T val) const {
             return !(
-                (val < min) ||
-                (val > max) ||
-                (minOpen && val == min) ||
-                (maxOpen && val == max)
+                (val < lower) ||
+                (val > upper) ||
+                (minOpen && val == lower) ||
+                (maxOpen && val == upper)
             );
         }
     };

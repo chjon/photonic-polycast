@@ -4,7 +4,6 @@
 #include "Common.h"
 #include "Geometry.h"
 #include "Material.h"
-#include "Renderable.h"
 
 namespace PPCast {
     class SceneNode {
@@ -52,7 +51,7 @@ namespace PPCast {
         inline SceneNode& rotateZ(const float angle_rad) { return rotate(angle_rad, glm::vec3(0, 0, 1)); }
     };
 
-    class GeometryNode: public SceneNode, public Renderable {
+    class GeometryNode: public SceneNode {
     private:
         Geometry::Primitive m_primitive;
 
@@ -71,7 +70,7 @@ namespace PPCast {
             , materialID(matID)
         {}
 
-        __host__ __device__ virtual bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const override;
+        __host__ __device__ bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const;
     };
 }
 

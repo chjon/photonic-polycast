@@ -15,7 +15,7 @@ CPPFLAGS = $(COMPILERFLAGS) $(CPPWARNS)
 # CPPFLAGS = $(COMPILERFLAGS)
 
 CU = nvcc
-CUFLAGS = $(COMPILERFLAGS)
+CUFLAGS = $(COMPILERFLAGS) --relocatable-device-code=true
 
 LDFLAGS = `libpng-config --ldflags`
 

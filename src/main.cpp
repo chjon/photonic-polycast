@@ -10,7 +10,6 @@ using namespace PPCast;
 
 extern int mainCUDA();
 uint32_t MaterialID::numMaterials = 0;
-const MaterialID MaterialID::INVALID = MaterialID(UINT32_MAX);
 
 // Options
 static UIntOption   opt_img_w  ("img-w"    , "the width of the image in pixels"        , 128);
@@ -18,7 +17,6 @@ static UIntOption   opt_img_h  ("img-h"    , "the height of the image in pixels"
 static StringOption opt_outfile("outfile"  , "the name of the output file"             , "img/test.png");
 static UIntOption   opt_verb   ("verb"     , "verbosity (0 = none, 1 = less, 2 = more)", 2);
 static UIntOption   opt_scene  ("testscene", "test scene"                              , 0);
-static UIntOption   opt_seed   ("seed"     , "random seed"                             , 0xDECAFBAD);
 
 template <class T>
 static inline T& vecInsert(std::vector<T>& vec, T&& val) {
@@ -167,7 +165,6 @@ int main(int argc, char *const *argv) {
     // Parse command line options
     if (Options::parseOptions(argc, argv)) return -1;
     if (*opt_verb >= 1) Options::printConfig(std::cout);
-    srand(*opt_seed);
 
     // Set up camera and scene
     Camera cam;

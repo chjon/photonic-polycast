@@ -22,16 +22,17 @@ __host__ __device__ bool Geometry::intersectSphere(HitInfo& hitInfo, const Ray& 
     ) return false;
 
     // Update hit info
-    hitInfo.t      = root;
-    hitInfo.normal = glm::vec4(r.at(root).xyz(), 0);
+    hitInfo.t        = root;
+    hitInfo.normal   = r.at(root);
+    hitInfo.normal.w = 0;
     return true;
 }
 
 __host__ __device__ static inline bool intersectCubePlane(float& t, const glm::vec3& n, const Ray& r, const Interval<float>& tRange) {
     const glm::vec3 o(r.origin());
     const glm::vec3 d(r.direction());
-    const glm::vec3 u = n.yzx();
-    const glm::vec3 v = n.zxy();
+    const glm::vec3 u(n.y, n.z, n.x);
+    const glm::vec3 v(n.z, n.x, n.y);
     const glm::mat3 uvd = glm::mat3(u, v, d);
     const float determinant = glm::determinant(uvd);
     if (glm::abs(determinant) < 1e-8) return false;
@@ -43,14 +44,16 @@ __host__ __device__ static inline bool intersectCubePlane(float& t, const glm::v
 }
 
 __host__ __device__ bool Geometry::intersectCube(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) {
-    const std::vector<glm::vec3> normals = {
+    constexpr uint32_t NUM_NORMALS = 6;
+    const glm::vec3 normals[NUM_NORMALS] = {
         {+1, 0, 0}, {0, +1, 0}, {0, 0, +1},
         {-1, 0, 0}, {0, -1, 0}, {0, 0, -1},
     };
 
     bool intersected = false;
-    for (const glm::vec3& n : normals) {
-        float tmpT = std::numeric_limits<float>::infinity();
+    for (uint32_t i = 0; i < NUM_NORMALS; ++i) {
+        const glm::vec3& n = normals[i];
+        float tmpT = INFINITY;
         if (!intersectCubePlane(tmpT, n, r, tRange)) continue;
         if (tmpT < hitInfo.t) {
             hitInfo.normal = glm::vec4(n, 0);

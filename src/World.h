@@ -2,11 +2,10 @@
 #define PPCAST_WORLD_H
 
 #include "Common.h"
-#include "Renderable.h"
 #include "SceneNode.h"
 
 namespace PPCast {
-    class World : public Renderable {
+    class World {
     private:
         std::vector<Material> m_materials;
 
@@ -16,12 +15,22 @@ namespace PPCast {
 
     public:
         World(std::vector<Material>&& materials, std::vector<GeometryNode>&& scene)
-            : Renderable()
-            , m_materials(materials)
+            : m_materials(materials)
             , m_geometry(scene)
         {}
 
-        __host__ __device__ bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const override;
+        __host__ __device__ static bool getIntersection(
+            HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange,
+            const GeometryNode* geometry, size_t numGeometry
+        );
+        
+        inline bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const {
+            return getIntersection(
+                hitInfo, r, tRange,
+                m_geometry.data(), m_geometry.size()
+            );
+        }
+
         const std::vector<Material>& getMaterials() const { return m_materials; }
         const std::vector<GeometryNode>& getGeometry() const { return m_geometry; }
     };
