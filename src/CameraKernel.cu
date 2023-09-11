@@ -5,17 +5,6 @@
 #include "Random.cuh"
 #include "World.cuh"
 
-#define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
-void check_cuda(cudaError_t result, char const *const func, const char *const file, int const line) {
-    if (result) {
-        std::cerr << "CUDA error = " << static_cast<unsigned int>(result) << " at " <<
-        file << ":" << line << " '" << func << "' \n";
-        // Make sure we call CUDA Device Reset before exiting
-        cudaDeviceReset();
-        exit(99);
-    }
-}
-
 __global__ void renderInit(
     curandState *randomState, int width, int height,
     uint32_t seed
@@ -51,13 +40,8 @@ __global__ void renderImageGPUKernel(
         rs
     );
 
-    
     // Write colour to framebuffer
-    frameBuffer[pixelIndex] = {
-        static_cast<float>(x) / width,
-        static_cast<float>(y) / height,
-        0.2f
-    };
+    frameBuffer[pixelIndex] = {colour.x, colour.y, colour.z};
 }
 
 __host__ __device__ glm::vec3 PPCast::Camera::renderPixel(
@@ -159,37 +143,18 @@ __host__ __device__ glm::vec3 PPCast::Camera::raycast(
 }
 
 bool PPCast::Camera::renderImageGPU(Image& image, const PPCast::World& scene) const {
+    // Allocate device buffers
     unsigned int numPixels = width * height;
-    PPCast::CudaDeviceVec<float3> d_frameBuffer(numPixels);
-    if (d_frameBuffer.size() == 0) {
-        std::cerr << "failed to allocate d_frameBuffer" << std::endl;
-        return false;
-    }
+    PPCast::CudaDeviceVec<float3>               d_frameBuffer(numPixels);
+    PPCast::CudaDeviceVec<curandState>          d_randState(numPixels);
+    PPCast::CudaDeviceVec<PPCast::Material>     d_materials(scene.getMaterials().size());
+    PPCast::CudaDeviceVec<PPCast::GeometryNode> d_geometry(scene.getGeometry().size());
+    PPCast::CudaDeviceVec<PPCast::Camera>       d_camera(1);
 
-    PPCast::CudaDeviceVec<curandState> d_randState(numPixels);
-    if (d_randState.size() == 0) {
-        std::cerr << "failed to allocate d_randState" << std::endl;
-        return false;
-    }
-    
     // Upload data to device
-    PPCast::CudaDeviceVec<PPCast::Material> d_materials(scene.getMaterials());
-    if (d_materials.size() == 0) {
-        std::cerr << "failed to allocate or upload d_materials" << std::endl;
-        return false;
-    }
-
-    PPCast::CudaDeviceVec<PPCast::GeometryNode> d_geometry(scene.getGeometry());
-    if (d_geometry.size() == 0) {
-        std::cerr << "failed to allocate or upload d_geometry" << std::endl;
-        return false;
-    }
-
-    PPCast::CudaDeviceVec<PPCast::Camera> d_camera(*this);
-    if (d_geometry.size() == 0) {
-        std::cerr << "failed to allocate or upload d_camera" << std::endl;
-        return false;
-    }
+    d_materials.copyToDevice(scene.getMaterials().data());
+    d_geometry .copyToDevice(scene.getGeometry().data());
+    d_camera   .copyToDevice(this);
 
     // Compute thread block dimensions
     int tx = 8;
@@ -213,9 +178,10 @@ bool PPCast::Camera::renderImageGPU(Image& image, const PPCast::World& scene) co
         d_camera.get(), d_randState.get()
     );
 
-    // Copy image back to host
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaDeviceSynchronize());
+
+    // Copy image back to host
     d_frameBuffer.copyToHost(reinterpret_cast<float3*>(image.data()));
 
     return true;
