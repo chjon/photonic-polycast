@@ -1,5 +1,5 @@
-#include "Material.h"
-#include "Random.h"
+#include "Material.cuh"
+#include "Random.cuh"
 
 using namespace PPCast;
 

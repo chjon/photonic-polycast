@@ -1,4 +1,4 @@
-#include "SceneNode.h"
+#include "SceneNode.cuh"
 
 using namespace PPCast;
 

@@ -1,10 +1,9 @@
-#include "Camera.h"
+#include "Camera.cuh"
 #include "Image.h"
-#include "Material.h"
+#include "Material.cuh"
 #include "Options.h"
-#include "Random.h"
-#include "Ray.h"
-#include "World.h"
+#include "Random.cuh"
+#include "World.cuh"
 
 using namespace PPCast;
 
@@ -25,7 +24,7 @@ Camera::Camera()
     , seed      (*opt_seed      )
 {}
 
-__host__ void Camera::initialize(uint32_t w, uint32_t h) {
+void Camera::initialize(uint32_t w, uint32_t h) {
     width  = w;
     height = h;
 

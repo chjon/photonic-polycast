@@ -2,8 +2,8 @@
 #define PPCAST_MATERIAL_H
 
 #include "Common.h"
-#include "Ray.h"
-#include "Types.h"
+#include "Ray.cuh"
+#include "Types.cuh"
 
 namespace PPCast {
     class RandomState;

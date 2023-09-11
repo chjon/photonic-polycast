@@ -7,15 +7,15 @@ OPTIMIZATION   = -O3
 SYSTEMINCLUDES = lib /usr/local/cuda-12.2/bin/../targets/x86_64-linux/include/
 COMPILERFLAGS  = $(DEBUGMODE) $(LANGVERSION) $(DEPGENERATION) $(OPTIMIZATION) $(addprefix -isystem ,$(SYSTEMINCLUDES))
 
-CPP = g++
-CPPWARNS = -Wall -Wextra -Werror -Wshadow -Wconversion -pedantic
-CPPFLAGS = $(COMPILERFLAGS) $(CPPWARNS)
+# CPP = g++
+# CPPWARNS = -Wall -Wextra -Werror -Wshadow -Wconversion -pedantic
+# CPPFLAGS = $(COMPILERFLAGS) $(CPPWARNS)
 
-# CPP = nvcc
-# CPPFLAGS = $(COMPILERFLAGS)
+CPP = nvcc
+CPPFLAGS = $(COMPILERFLAGS)
 
 CU = nvcc
-CUFLAGS = $(COMPILERFLAGS) --relocatable-device-code=true
+CUFLAGS = $(COMPILERFLAGS) --relocatable-device-code=true -lineinfo
 
 LDFLAGS = `libpng-config --ldflags`
 

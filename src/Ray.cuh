@@ -2,8 +2,8 @@
 #define PPCAST_RAY_H
 
 #include "Common.h"
-#include "Interval.h"
-#include "Types.h"
+#include "Interval.cuh"
+#include "Types.cuh"
 
 namespace PPCast {
     class Material;

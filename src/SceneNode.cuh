@@ -2,8 +2,8 @@
 #define PPCAST_SCENENODE_H
 
 #include "Common.h"
-#include "Geometry.h"
-#include "Material.h"
+#include "Geometry.cuh"
+#include "Material.cuh"
 
 namespace PPCast {
     class SceneNode {

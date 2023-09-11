@@ -1,4 +1,4 @@
-#include "World.h"
+#include "World.cuh"
 
 using namespace PPCast;
 

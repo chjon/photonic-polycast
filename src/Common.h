@@ -1,12 +1,9 @@
 #ifndef PPCAST_COMMON_H
 #define PPCAST_COMMON_H
 
-#ifndef __NVCC__
-    #define __host__
-    #define __device__
-    #define __global__
-#endif
+#include <cuda.h>
 
+#define GLM_FORCE_CUDA
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

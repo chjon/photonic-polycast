@@ -1,14 +1,13 @@
 #include "Common.h"
-#include "Camera.h"
+#include "Camera.cuh"
 #include "Image.h"
-#include "Material.h"
+#include "Material.cuh"
 #include "Options.h"
-#include "SceneNode.h"
-#include "World.h"
+#include "SceneNode.cuh"
+#include "World.cuh"
 
 using namespace PPCast;
 
-extern int mainCUDA();
 uint32_t MaterialID::numMaterials = 0;
 
 // Options

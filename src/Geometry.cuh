@@ -2,7 +2,7 @@
 #define PPCAST_GEOMETRY_H
 
 #include "Common.h"
-#include "Ray.h"
+#include "Ray.cuh"
 
 namespace PPCast {
     class Geometry {

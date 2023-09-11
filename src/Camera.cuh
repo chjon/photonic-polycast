@@ -2,9 +2,9 @@
 #define PPCAST_CAMERA_H
 
 #include "Common.h"
-#include "Ray.h"
-#include "SceneNode.h"
-#include "World.h"
+#include "Ray.cuh"
+#include "SceneNode.cuh"
+#include "World.cuh"
 
 namespace PPCast {
     class Image;

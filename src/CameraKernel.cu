@@ -1,9 +1,9 @@
 #include <curand_kernel.h>
-#include "Camera.h"
+#include "Camera.cuh"
 #include "CudaDeviceVec.cuh"
 #include "Image.h"
-#include "Random.h"
-#include "World.h"
+#include "Random.cuh"
+#include "World.cuh"
 
 #define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
 void check_cuda(cudaError_t result, char const *const func, const char *const file, int const line) {

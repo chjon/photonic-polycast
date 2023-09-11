@@ -2,7 +2,7 @@
 #define PPCAST_WORLD_H
 
 #include "Common.h"
-#include "SceneNode.h"
+#include "SceneNode.cuh"
 
 namespace PPCast {
     class World {
