@@ -18,10 +18,20 @@
 #include <vector>
 
 // Printing GLM vectors and matrices
-std::ostream& operator<<(std::ostream &os, const glm::vec2& v);
-std::ostream& operator<<(std::ostream &os, const glm::vec3& v);
-std::ostream& operator<<(std::ostream &os, const glm::vec4& v);
-std::ostream& operator<<(std::ostream &os, const glm::mat3& v);
-std::ostream& operator<<(std::ostream &os, const glm::mat4& v);
+template <glm::length_t L, typename T, glm::qualifier Q>
+std::ostream& operator<<(std::ostream &os, const glm::vec<L, T, Q>& v) {
+    os << '(' << v[0];
+    for (glm::length_t i = 1; i < L; ++i)
+        os << ',' << v[i];
+    return os << ')';
+}
+
+template <glm::length_t C, glm::length_t R, typename T, glm::qualifier Q>
+std::ostream& operator<<(std::ostream &os, const glm::mat<C, R, T, Q>& m) {
+    os << '(' << m[0];
+    for (glm::length_t i = 1; i < C; ++i)
+        os << ',' << m[i];
+    return os << ')';
+}
 
 #endif
