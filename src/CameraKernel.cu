@@ -55,7 +55,7 @@ __host__ __device__ glm::vec3 PPCast::Camera::renderPixel(
     PPCast::Interval<float> tRange(0.f, INFINITY, true, false);
     for (uint32_t i = 0; i < raysPerPx; ++i) {
         const Ray ray = generateRay(x, y, randomState);
-        total += Camera::raycast(ray, std::move(tRange), world, maxBounces, randomState);
+        total += raycast(ray, std::move(tRange), world, randomState);
     }
     return total / static_cast<float>(raysPerPx);
 }
@@ -94,12 +94,12 @@ __host__ __device__ static glm::vec3 getSkyboxColour(const glm::vec4& direction)
 
 __host__ __device__ glm::vec3 PPCast::Camera::raycast(
     const Ray& ray, Interval<float>&& tRange,
-    const PPCast::World& world,
-    unsigned int maxDepth, PPCast::RandomState& randomState
-) {
+    const PPCast::World& world, PPCast::RandomState& randomState
+) const {
     PPCast::Ray currentRay = ray;
     glm::vec3 totalAttenuation(1);
 
+    uint32_t maxDepth = maxBounces;
     while (maxDepth--) {
         // Check if ray intersects with geometry
         PPCast::HitInfo hitInfo;

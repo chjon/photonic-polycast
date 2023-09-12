@@ -13,15 +13,71 @@ namespace PPCast {
 
     class Camera {
     private:
-        // Derived values -- cached for generating rays
+        ////////////////////
+        // Derived values //
+        ////////////////////
+        // These values are computed once and cached for generating rays
+        
+        /// @brief The horizontal size of a pixel in viewspace
         glm::vec3 m_pixel_dx;
-        glm::vec3 m_pixel_dy;
-        glm::vec3 m_pixel_topLeft;
-        glm::mat4 m_v2w;
-        float     m_defocusRadius;
 
+        /// @brief The vertical size of a pixel in viewspace
+        glm::vec3 m_pixel_dy;
+
+        /// @brief The top-left corner of the focal plane in viewspace
+        glm::vec3 m_pixel_topLeft;
+
+        /// @brief The radius of the defocus disk
+        float m_defocusRadius;
+        
+        /// @brief The viewspace-to-worldspace transformation matrix
+        glm::mat4 m_v2w;
+
+        /////////////////
+        // Private API //
+        /////////////////
+
+        /**
+         * @brief Generate an image from a given scene via raytracing on the CPU
+         * 
+         * @param image The image to output
+         * @param scene The scene to render
+         * @return true if the image was rendered successfully
+         */
         bool renderImageCPU(Image& image, const World& scene) const;
+
+        /**
+         * @brief Generate an image from a given scene via raytracing on the GPU
+         * 
+         * @param image The image to output
+         * @param scene The scene to render
+         * @return true if the image was rendered successfully
+         */
         bool renderImageGPU(Image& image, const World& scene) const;
+
+        /**
+         * @brief Sample a ray to cast for a pixel
+         * 
+         * @param x The x position of the pixel
+         * @param y The y position of the pixel
+         * @param randomState The state for random number generation
+         * @return A randomly sampled ray for the pixel
+         */
+        __host__ __device__ Ray generateRay(uint32_t x, uint32_t y, RandomState& randomState) const;
+
+        /**
+         * @brief Perform raytracing for a single ray
+         * 
+         * @param ray The ray to trace
+         * @param tRange The permissible scale values of the ray's direction vector
+         * @param world The scene to render
+         * @param randomState The state for random number generation
+         * @return the colour contribution of the ray 
+         */
+        __host__ __device__ glm::vec3 raycast(
+            const Ray& ray, Interval<float>&& tRange,
+            const World& world, RandomState& randomState
+        ) const;
 
     public:
         /////////////////////////////////////
@@ -93,21 +149,16 @@ namespace PPCast {
         bool renderImage(Image& image, const World& scene) const;
 
         /**
-         * @brief Sample a ray to cast for a pixel
+         * @brief Render a pixel of a given scene via raytracing
          * 
-         * @param x The x position of the pixel
-         * @param y The y position of the pixel
-         * @param randomState The state for random number generation
-         * @return A randomly sampled ray for the pixel
+         * @param x The pixel's x coordinate
+         * @param y The pixel's y coordinate
+         * @param world The scene to render
+         * @param randomState The state data to use for random number generation
+         * @return the colour of the pixel
+         * 
+         * @note This is public because it needs to be accessible to the GPU kernel
          */
-        __host__ __device__ Ray generateRay(uint32_t x, uint32_t y, RandomState& randomState) const;
-
-        __host__ __device__ static glm::vec3 raycast(
-            const Ray& ray, Interval<float>&& tRange,
-            const World& world,
-            unsigned int maxDepth, RandomState& randomState
-        );
-
         __host__ __device__ glm::vec3 renderPixel(
             uint32_t x, uint32_t y,
             const World& world,
