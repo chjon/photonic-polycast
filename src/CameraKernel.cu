@@ -1,6 +1,7 @@
 #include <curand_kernel.h>
 #include "Camera.cuh"
 #include "CudaDeviceVec.cuh"
+#include "CudaSerializable.cuh"
 #include "Image.h"
 #include "Random.cuh"
 #include "World.cuh"
@@ -21,8 +22,8 @@ __global__ void renderInit(
 
 __global__ void renderImageGPUKernel(
     float3 *frameBuffer, int width, int height,
-    PPCast::Material* materials, int numMaterials,
-    PPCast::GeometryNode* geometry, int numGeometry,
+    PPCast::VectorRef<PPCast::Material>* materials,
+    PPCast::VectorRef<PPCast::GeometryNode>* geometry,
     PPCast::Camera* camera, curandState *randomState
 ) {
     // Compute pixel index
@@ -31,14 +32,15 @@ __global__ void renderImageGPUKernel(
     if ((x >= width) || (y >= height)) return;
     const int pixelIndex = y * width + x;
 
+    // Compute VectorRef data pointers
+    materials->data = reinterpret_cast<PPCast::Material*>    (reinterpret_cast<PPCast::VectorRef<PPCast::Material>*>(materials) + 1);
+    geometry ->data = reinterpret_cast<PPCast::GeometryNode*>(reinterpret_cast<PPCast::VectorRef<PPCast::GeometryNode>*>(geometry) + 1);
+    PPCast::VectorRef<PPCast::Material>& mats = *materials;
+    PPCast::VectorRef<PPCast::GeometryNode>& geom = *geometry;
+
     // Generate ray
     PPCast::RandomState rs(&randomState[pixelIndex]);
-    glm::vec3 colour = camera->renderPixel(
-        x, y,
-        materials, numMaterials,
-        geometry, numGeometry,
-        rs
-    );
+    glm::vec3 colour = camera->renderPixel(x, y, mats, geom, rs);
 
     // Write colour to framebuffer
     frameBuffer[pixelIndex] = {colour.x, colour.y, colour.z};
@@ -46,8 +48,8 @@ __global__ void renderImageGPUKernel(
 
 __host__ __device__ glm::vec3 PPCast::Camera::renderPixel(
     uint32_t x, uint32_t y,
-    const PPCast::Material* materials, size_t numMaterials,
-    const PPCast::GeometryNode* geometry, size_t numGeometry,
+    const PPCast::VectorRef<PPCast::Material>& materials,
+    const PPCast::VectorRef<PPCast::GeometryNode>& geometry,
     PPCast::RandomState& randomState
 ) const {
     // Perform raytracing
@@ -57,8 +59,7 @@ __host__ __device__ glm::vec3 PPCast::Camera::renderPixel(
         const Ray ray = generateRay(x, y, randomState);
         total += Camera::raycast(
             ray, std::move(tRange),
-            materials, numMaterials,
-            geometry, numGeometry,
+            materials, geometry,
             maxBounces, randomState
         );
     }
@@ -99,8 +100,8 @@ __host__ __device__ static glm::vec3 getSkyboxColour(const glm::vec4& direction)
 
 __host__ __device__ glm::vec3 PPCast::Camera::raycast(
     const Ray& ray, Interval<float>&& tRange,
-    const PPCast::Material* materials, size_t numMaterials,
-    const PPCast::GeometryNode* geometry, size_t numGeometry,
+    const PPCast::VectorRef<PPCast::Material>& materials,
+    const PPCast::VectorRef<PPCast::GeometryNode>& geometry,
     unsigned int maxDepth, PPCast::RandomState& randomState
 ) {
     PPCast::Ray currentRay = ray;
@@ -109,10 +110,7 @@ __host__ __device__ glm::vec3 PPCast::Camera::raycast(
     while (maxDepth--) {
         // Check if ray intersects with geometry
         PPCast::HitInfo hitInfo;
-        const bool hit = World::getIntersection(
-            hitInfo, currentRay, tRange,
-            geometry, numGeometry
-        );
+        const bool hit = World::getIntersection(hitInfo, currentRay, tRange, geometry);
 
         // Return the sky colour if there is no intersection
         if (!hit) return totalAttenuation * getSkyboxColour(currentRay.direction());
@@ -142,19 +140,19 @@ __host__ __device__ glm::vec3 PPCast::Camera::raycast(
     return glm::vec3(0);
 }
 
-bool PPCast::Camera::renderImageGPU(Image& image, const PPCast::World& scene) const {
+bool PPCast::Camera::renderImageGPU(Image& image, const PPCast::World& world) const {
     // Allocate device buffers
     unsigned int numPixels = width * height;
     PPCast::CudaDeviceVec<float3>               d_frameBuffer(numPixels);
-    PPCast::CudaDeviceVec<curandState>          d_randState(numPixels);
-    PPCast::CudaDeviceVec<PPCast::Material>     d_materials(scene.getMaterials().size());
-    PPCast::CudaDeviceVec<PPCast::GeometryNode> d_geometry(scene.getGeometry().size());
-    PPCast::CudaDeviceVec<PPCast::Camera>       d_camera(1);
+    PPCast::CudaDeviceVec<curandState>          d_randState  (numPixels);
+    PPCast::CudaDeviceBox<PPCast::VectorRef<PPCast::Material>>     d_materials(world.materials);
+    PPCast::CudaDeviceBox<PPCast::VectorRef<PPCast::GeometryNode>> d_geometry (world.geometry);
+    PPCast::CudaDeviceVec<PPCast::Camera>       d_camera     (*this);
 
     // Upload data to device
-    d_materials.copyToDevice(scene.getMaterials().data());
-    d_geometry .copyToDevice(scene.getGeometry().data());
-    d_camera   .copyToDevice(this);
+    d_materials.copyToDevice();
+    d_geometry .copyToDevice();
+    d_camera   .copyToDevice();
 
     // Compute thread block dimensions
     int tx = 8;
@@ -173,8 +171,7 @@ bool PPCast::Camera::renderImageGPU(Image& image, const PPCast::World& scene) co
     // Render image
     renderImageGPUKernel<<<blocks, threads>>>(
         d_frameBuffer.get(), width, height,
-        d_materials.get(), d_materials.size(),
-        d_geometry.get(), d_geometry.size(),
+        d_materials.get(), d_geometry.get(),
         d_camera.get(), d_randState.get()
     );
 

@@ -39,7 +39,7 @@ void Camera::initialize(uint32_t w, uint32_t h) {
     m_pixel_dx      = viewport_x / static_cast<float>(width);
     m_pixel_dy      = viewport_y / static_cast<float>(height);
     m_pixel_topLeft = viewport_topLeft + 0.5f * (m_pixel_dx + m_pixel_dy);
-    m_v2w           = glm::inverse(glm::lookAt(pos, centre, up));
+    m_v2w           = glm::inverse(glm::lookAt(lookfrom, lookat, up));
     m_defocusRadius = focalDist * glm::tan(glm::radians(0.5f * dofAngle));
 }
 

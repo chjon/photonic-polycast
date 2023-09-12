@@ -24,25 +24,49 @@ namespace PPCast {
         bool renderImageGPU(Image& image, const World& scene) const;
 
     public:
-        // Camera position and orientation
-        glm::vec3 pos;
-        glm::vec3 centre;
+        /////////////////////////////////////
+        // Camera position and orientation //
+        /////////////////////////////////////
+
+        /// @brief Camera centre ("eye" position)
+        glm::vec3 lookfrom;
+
+        /// @brief Camera direction
+        glm::vec3 lookat;
+
+        /// @brief Camera orientation
         glm::vec3 up;
 
-        // Camera settings
-        float    vfov;
-        float    dofAngle;
-        float    focalDist;
+        //////////////////////////
+        // Camera lens settings //
+        //////////////////////////
+        
+        /// @brief Vertical field-of-view, measured in degrees
+        float vfov;
 
-        // Image dimensions
+        /// @brief Depth of field, measured in degrees
+        float dofAngle;
+
+        /// @brief Focal distance
+        float focalDist;
+
+        //////////////////////////////////
+        // Image dimensions and quality //
+        //////////////////////////////////
+
+        /// @brief Image width in pixels
         uint32_t width;
+
+        /// @brief Image height in pixels
         uint32_t height;
 
-        // Image quality
+        /// @brief Number of rays to cast per pixel
         uint32_t raysPerPx;
+
+        /// @brief Maximum number of ray bounces
         uint32_t maxBounces;
 
-        // Random number generation
+        /// @brief Seed for pseudorandom number generation
         uint32_t seed;
 
         /**
@@ -51,15 +75,37 @@ namespace PPCast {
          */
         Camera();
 
+        /**
+         * @brief Compute derived values from public parameters in preparation for raytracing
+         * 
+         * @param width The width of the image
+         * @param height The height of the image
+         */
         void initialize(uint32_t width, uint32_t height);
+
+        /**
+         * @brief Generate an image from a given scene via raytracing
+         * 
+         * @param image The image to output
+         * @param scene The scene to render
+         * @return true if the image was rendered successfully
+         */
         bool renderImage(Image& image, const World& scene) const;
 
+        /**
+         * @brief Sample a ray to cast for a pixel
+         * 
+         * @param x The x position of the pixel
+         * @param y The y position of the pixel
+         * @param randomState The state for random number generation
+         * @return A randomly sampled ray for the pixel
+         */
         __host__ __device__ Ray generateRay(uint32_t x, uint32_t y, RandomState& randomState) const;
 
         __host__ __device__ static glm::vec3 raycast(
             const Ray& ray, Interval<float>&& tRange,
-            const PPCast::Material* materials, size_t numMaterials,
-            const PPCast::GeometryNode* geometry, size_t numGeometry,
+            const PPCast::VectorRef<PPCast::Material>& materials,
+            const PPCast::VectorRef<PPCast::GeometryNode>& geometry,
             unsigned int maxDepth, RandomState& randomState
         );
 
@@ -68,20 +114,17 @@ namespace PPCast {
             const World& world,
             unsigned int maxDepth, RandomState& randomState
         ) {
-            const std::vector<Material>& materials = world.getMaterials();
-            const std::vector<GeometryNode>& geometry = world.getGeometry();
             return raycast(
                 ray, std::move(tRange),
-                materials.data(), materials.size(),
-                geometry.data(), geometry.size(),
+                world.materials, world.geometry,
                 maxDepth, randomState
             );
         }
 
         __host__ __device__ glm::vec3 renderPixel(
             uint32_t x, uint32_t y,
-            const PPCast::Material* materials, size_t numMaterials,
-            const PPCast::GeometryNode* geometry, size_t numGeometry,
+            const PPCast::VectorRef<PPCast::Material>& materials,
+            const PPCast::VectorRef<PPCast::GeometryNode>& geometry,
             RandomState& randomState
         ) const;
 
@@ -90,12 +133,9 @@ namespace PPCast {
             const World& world,
             RandomState& randomState
         ) const {
-            const std::vector<Material>& materials = world.getMaterials();
-            const std::vector<GeometryNode>& geometry = world.getGeometry();
             return renderPixel(
                 x, y,
-                materials.data(), materials.size(),
-                geometry.data(), geometry.size(),
+                world.materials, world.geometry,
                 randomState
             );
         }

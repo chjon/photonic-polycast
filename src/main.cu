@@ -29,9 +29,9 @@ static void makeScene(
     std::vector<GeometryNode>& scene
 ) {
     // Default camera position and orientation
-    cam.pos    = {0, 0, 1};
-    cam.centre = {0, 0, 0};
-    cam.up     = {0, 1, 0};
+    cam.lookfrom = {0, 0, 1};
+    cam.lookat   = {0, 0, 0};
+    cam.up       = {0, 1, 0};
 
     // Set up materials
     Material normalMat     = vecInsert(mats, Material(MaterialType::NormalDir , {glm::vec3(1.0, 1.0, 1.0), 0.0f, 1.0f}));
@@ -137,9 +137,9 @@ static void makeScene(
                 .translate({0, 0, -3});
             break;
         case 8:
-            cam.pos    = {-2, 2,  2};
-            cam.centre = { 0, 0,  0};
-            cam.up     = { 0, 1,  0};
+            cam.lookfrom = {-2, 2,  2};
+            cam.lookat   = { 0, 0,  0};
+            cam.up       = { 0, 1,  0};
 
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, lambertYellow)); scene.back()
                 .scale(100.f)
