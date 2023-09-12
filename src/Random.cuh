@@ -6,13 +6,14 @@
 #include "Common.h"
 
 namespace PPCast {
-    class RandomState {
+    union RandomState {
     private:
         curandState* randomState;
         std::mt19937* randomGenerator;
+
     public:
-        __device__ RandomState(curandState* rs) : randomState(rs), randomGenerator(nullptr) {}
-        __host__ RandomState(std::mt19937* rg) : randomState(nullptr), randomGenerator(rg) {}
+        __device__ RandomState(curandState* rs) : randomState(rs) {}
+        __host__ RandomState(std::mt19937* rg) : randomGenerator(rg) {}
 
         __host__ __device__ inline float random() {
             #ifdef __CUDA_ARCH__

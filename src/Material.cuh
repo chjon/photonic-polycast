@@ -6,7 +6,7 @@
 #include "Types.cuh"
 
 namespace PPCast {
-    class RandomState;
+    union RandomState;
 
     // Note: not using subclasses because the Material class needs to have constant size for array allocation
     enum MaterialType: uint32_t {

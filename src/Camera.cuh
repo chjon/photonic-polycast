@@ -8,7 +8,7 @@
 
 namespace PPCast {
     class Image;
-    class RandomState;
+    union RandomState;
     class World;
 
     class Camera {
