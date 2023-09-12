@@ -17,7 +17,7 @@ namespace PPCast {
          * 
          * @param devicePtr a pointer to device memory
          */
-        virtual void copyToDevice(void* devicePtr) const {}
+        virtual void copyToDevice(void* devicePtr) const = 0;
     };
 
     template <typename T>
@@ -26,7 +26,7 @@ namespace PPCast {
     {
     public:
         const T* data;
-        uint32_t size;
+        size_t size;
 
         VectorRef(const std::vector<T>& vec)
             : data(vec.data())

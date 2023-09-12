@@ -1,4 +1,7 @@
 CWD = $(shell pwd)
+COMMA := ,
+EMPTY :=
+SPACE := $(EMPTY) $(EMPTY)
 
 DEBUGMODE      = -g
 LANGVERSION    = -std=c++17
@@ -7,15 +10,13 @@ OPTIMIZATION   = -O3
 SYSTEMINCLUDES = lib /usr/local/cuda-12.2/bin/../targets/x86_64-linux/include/
 COMPILERFLAGS  = $(DEBUGMODE) $(LANGVERSION) $(DEPGENERATION) $(OPTIMIZATION) $(addprefix -isystem ,$(SYSTEMINCLUDES))
 
-# CPP = g++
-# CPPWARNS = -Wall -Wextra -Werror -Wshadow -Wconversion -pedantic
-# CPPFLAGS = $(COMPILERFLAGS) $(CPPWARNS)
-
 CPP = nvcc
-CPPFLAGS = $(COMPILERFLAGS)
+CPPWARNS = -Wall -Wextra -Werror -Wshadow -Wconversion -Wpedantic -pedantic
+CPPFLAGS = $(COMPILERFLAGS) --compiler-options $(subst $(SPACE),$(COMMA),$(CPPWARNS))
 
 CU = nvcc
-CUFLAGS = $(COMPILERFLAGS) --relocatable-device-code=true -lineinfo
+CUWARNS = -Wall -Wextra -Werror -Wshadow -Wconversion -Wno-pedantic
+CUFLAGS = $(COMPILERFLAGS) --compiler-options $(subst $(SPACE),$(COMMA),$(CUWARNS)) --relocatable-device-code=true -lineinfo
 
 LDFLAGS = `libpng-config --ldflags`
 
@@ -40,8 +41,8 @@ clean:
 	rm -rf $(OBJ_DIR)
 
 info: $(CPPSRCS) $(CUSRCS)
-	@echo "Compiling with flags: $(COMPILERFLAGS)"
-	@echo "Using C++ warnings: $(CPPWARNS)"
+	@echo "Compiling CPP with flags: $(CPPFLAGS)"
+	@echo "Compiling CU with flags: $(CUFLAGS)"
 
 # Compile and link target binary
 $(TARGET): info $(OBJ_DIR) $(CPPOBJS) $(CUOBJS) $(BIN_DIR)
