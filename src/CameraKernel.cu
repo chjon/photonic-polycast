@@ -35,12 +35,11 @@ __global__ void renderImageGPUKernel(
     // Compute VectorRef data pointers
     materials->data = reinterpret_cast<PPCast::Material*>    (reinterpret_cast<PPCast::VectorRef<PPCast::Material>*>(materials) + 1);
     geometry ->data = reinterpret_cast<PPCast::GeometryNode*>(reinterpret_cast<PPCast::VectorRef<PPCast::GeometryNode>*>(geometry) + 1);
-    PPCast::VectorRef<PPCast::Material>& mats = *materials;
-    PPCast::VectorRef<PPCast::GeometryNode>& geom = *geometry;
+    PPCast::World world(*materials, *geometry);
 
     // Generate ray
     PPCast::RandomState rs(&randomState[pixelIndex]);
-    glm::vec3 colour = camera->renderPixel(x, y, mats, geom, rs);
+    glm::vec3 colour = camera->renderPixel(x, y, world, rs);
 
     // Write colour to framebuffer
     frameBuffer[pixelIndex] = {colour.x, colour.y, colour.z};
@@ -48,8 +47,7 @@ __global__ void renderImageGPUKernel(
 
 __host__ __device__ glm::vec3 PPCast::Camera::renderPixel(
     uint32_t x, uint32_t y,
-    const PPCast::VectorRef<PPCast::Material>& materials,
-    const PPCast::VectorRef<PPCast::GeometryNode>& geometry,
+    const PPCast::World& world,
     PPCast::RandomState& randomState
 ) const {
     // Perform raytracing
@@ -57,11 +55,7 @@ __host__ __device__ glm::vec3 PPCast::Camera::renderPixel(
     PPCast::Interval<float> tRange(0.f, INFINITY, true, false);
     for (uint32_t i = 0; i < raysPerPx; ++i) {
         const Ray ray = generateRay(x, y, randomState);
-        total += Camera::raycast(
-            ray, std::move(tRange),
-            materials, geometry,
-            maxBounces, randomState
-        );
+        total += Camera::raycast(ray, std::move(tRange), world, maxBounces, randomState);
     }
     return total / static_cast<float>(raysPerPx);
 }
@@ -100,8 +94,7 @@ __host__ __device__ static glm::vec3 getSkyboxColour(const glm::vec4& direction)
 
 __host__ __device__ glm::vec3 PPCast::Camera::raycast(
     const Ray& ray, Interval<float>&& tRange,
-    const PPCast::VectorRef<PPCast::Material>& materials,
-    const PPCast::VectorRef<PPCast::GeometryNode>& geometry,
+    const PPCast::World& world,
     unsigned int maxDepth, PPCast::RandomState& randomState
 ) {
     PPCast::Ray currentRay = ray;
@@ -110,7 +103,7 @@ __host__ __device__ glm::vec3 PPCast::Camera::raycast(
     while (maxDepth--) {
         // Check if ray intersects with geometry
         PPCast::HitInfo hitInfo;
-        const bool hit = World::getIntersection(hitInfo, currentRay, tRange, geometry);
+        const bool hit = world.getIntersection(hitInfo, currentRay, tRange);
 
         // Return the sky colour if there is no intersection
         if (!hit) return totalAttenuation * getSkyboxColour(currentRay.direction());
@@ -119,7 +112,7 @@ __host__ __device__ glm::vec3 PPCast::Camera::raycast(
         glm::vec4 scatterDirection;
         glm::vec3 attenuation;
         assert(static_cast<uint32_t>(hitInfo.materialID) != UINT32_MAX);
-        const PPCast::Material& material = materials[static_cast<uint32_t>(hitInfo.materialID)];
+        const PPCast::Material& material = world.materials[static_cast<uint32_t>(hitInfo.materialID)];
         const bool generatedRay = material.scatter(
             scatterDirection,
             attenuation,

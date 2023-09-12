@@ -104,41 +104,15 @@ namespace PPCast {
 
         __host__ __device__ static glm::vec3 raycast(
             const Ray& ray, Interval<float>&& tRange,
-            const PPCast::VectorRef<PPCast::Material>& materials,
-            const PPCast::VectorRef<PPCast::GeometryNode>& geometry,
+            const World& world,
             unsigned int maxDepth, RandomState& randomState
         );
 
-        static inline glm::vec3 raycast(
-            const Ray& ray, Interval<float>&& tRange,
-            const World& world,
-            unsigned int maxDepth, RandomState& randomState
-        ) {
-            return raycast(
-                ray, std::move(tRange),
-                world.materials, world.geometry,
-                maxDepth, randomState
-            );
-        }
-
         __host__ __device__ glm::vec3 renderPixel(
             uint32_t x, uint32_t y,
-            const PPCast::VectorRef<PPCast::Material>& materials,
-            const PPCast::VectorRef<PPCast::GeometryNode>& geometry,
-            RandomState& randomState
-        ) const;
-
-        inline glm::vec3 renderPixel(
-            uint32_t x, uint32_t y,
             const World& world,
             RandomState& randomState
-        ) const {
-            return renderPixel(
-                x, y,
-                world.materials, world.geometry,
-                randomState
-            );
-        }
+        ) const;
     };
 }
 

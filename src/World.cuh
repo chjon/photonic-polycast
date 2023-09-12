@@ -12,19 +12,17 @@ namespace PPCast {
         const VectorRef<Material> materials;
         const VectorRef<GeometryNode> geometry;
 
-        World(const std::vector<Material>& mats, const std::vector<GeometryNode>& geom)
+        __host__ World(const std::vector<Material>& mats, const std::vector<GeometryNode>& geom)
             : materials(mats)
             , geometry (geom)
         {}
 
-        __host__ __device__ static bool getIntersection(
-            HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange,
-            const VectorRef<GeometryNode>& geometry
-        );
+        __device__ World(const VectorRef<Material>& mats, const VectorRef<GeometryNode>& geom)
+            : materials(mats)
+            , geometry (geom)
+        {}
         
-        inline bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const {
-            return getIntersection(hitInfo, r, tRange, geometry);
-        }
+        __host__ __device__ bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const;
     };
 }
 

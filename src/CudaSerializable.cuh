@@ -33,13 +33,18 @@ namespace PPCast {
             , size(vec.size())
         {}
 
+        __host__ __device__ VectorRef(const VectorRef& vec)
+            : data(vec.data)
+            , size(vec.size)
+        {}
+
         __host__ __device__ inline const T& operator[] (uint32_t i) const { assert(i < size); return data[i]; }
 
         //////////////////////////////
         // CudaSerializable methods //
         //////////////////////////////
 
-        inline size_t numBytes() const { return sizeof(VectorRef<T>) + sizeof(T) * size; }
+        __host__ __device__ inline size_t numBytes() const { return sizeof(VectorRef<T>) + sizeof(T) * size; }
 
         void copyToDevice(void* devicePtr) const {
             checkCudaErrors(cudaMemcpy(devicePtr, this, sizeof(VectorRef<T>), cudaMemcpyHostToDevice));
