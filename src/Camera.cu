@@ -22,7 +22,95 @@ Camera::Camera()
     , raysPerPx (*opt_raysPerPx )
     , maxBounces(*opt_maxBounces)
     , seed      (*opt_seed      )
+    , useGPU    (*opt_usegpu    )
 {}
+
+bool Camera::renderImageCPU(Image& image, const World& scene) const {
+    std::mt19937 randomGenerator(seed);
+    RandomState randomState(&randomGenerator);
+    for (uint32_t y = 0; y < height; ++y) {
+        std::clog << "\rRendering scanlines: " << (y + 1) << " / " << height << " " << std::flush;
+        for (uint32_t x = 0; x < width; ++x) {
+            image.get(x, y) = renderPixel(x, y, scene, randomState);
+        }
+    }
+    std::clog << "\rRendering completed: " << height << " / " << height << std::flush << std::endl;
+
+    return true;
+}
+
+__host__ __device__ PPCast::Ray PPCast::Camera::generateRay(uint32_t x, uint32_t y, PPCast::RandomState& randomState) const {
+    // Compute origin point in viewspace
+    glm::vec3 rayOrigin = {0, 0, 0}; 
+
+    // Perturb the origin point
+    rayOrigin += m_defocusRadius * glm::vec3(randomInUnitSphere<2>(randomState), 0);
+
+    // Compute the pixel sample position in the viewspace focal plane
+    glm::vec3 pixelSample =
+        m_pixel_topLeft +
+        (static_cast<float>(x) * m_pixel_dx) +
+        (static_cast<float>(y) * m_pixel_dy);
+    
+    // Perturb the pixel sample position
+    pixelSample += (m_pixel_dx + m_pixel_dy) * glm::vec3(randomFloatVector<2>(randomState) - 0.5f * glm::vec2(1), 0);
+
+    // Compute the pixel sample position in the worldspace focal plane
+    glm::vec4 worldspacePixelSample = m_v2w * glm::vec4(pixelSample, 1);
+
+    // Return ray in worldspace
+    const glm::vec4 worldspaceRayOrigin = m_v2w * glm::vec4(rayOrigin, 1);
+    const glm::vec4 worldspaceRayDir    = glm::normalize(worldspacePixelSample - worldspaceRayOrigin);
+    return PPCast::Ray(worldspaceRayOrigin, worldspaceRayDir);
+}
+
+__host__ __device__ static glm::vec3 getSkyboxColour(const glm::vec4& direction) {
+    constexpr glm::vec3 skyTopColour    = glm::vec3(0.5, 0.7, 1.0);
+    constexpr glm::vec3 skyBottomColour = glm::vec3(1.0, 1.0, 1.0);
+    const float a = 0.5f * (glm::normalize(direction).y + 1.f);
+    return (1.f - a) * skyBottomColour + a * skyTopColour;
+}
+
+__host__ __device__ glm::vec3 PPCast::Camera::raycast(
+    const Ray& ray, Interval<float>&& tRange,
+    const PPCast::World& world, PPCast::RandomState& randomState
+) const {
+    PPCast::Ray currentRay = ray;
+    glm::vec3 totalAttenuation(1);
+
+    uint32_t maxDepth = maxBounces;
+    while (maxDepth--) {
+        // Check if ray intersects with geometry
+        PPCast::HitInfo hitInfo;
+        const bool hit = world.getIntersection(hitInfo, currentRay, tRange);
+
+        // Return the sky colour if there is no intersection
+        if (!hit) return totalAttenuation * getSkyboxColour(currentRay.direction());
+        
+        // Generate a reflected or transmitted ray
+        glm::vec4 scatterDirection;
+        glm::vec3 attenuation;
+        assert(static_cast<uint32_t>(hitInfo.materialID) != UINT32_MAX);
+        const PPCast::Material& material = world.materials[static_cast<uint32_t>(hitInfo.materialID)];
+        const bool generatedRay = material.scatter(
+            scatterDirection,
+            attenuation,
+            currentRay.direction(),
+            hitInfo,
+            randomState
+        );
+        
+        // Return the material colour if there is no generated ray
+        if (!generatedRay) return totalAttenuation * attenuation;
+
+        // Cast the generated ray
+        tRange.lower = 1e-3f;
+        currentRay = PPCast::Ray(hitInfo.hitPoint, glm::normalize(scatterDirection));
+        totalAttenuation = totalAttenuation * attenuation;
+    }
+
+    return glm::vec3(0);
+}
 
 void Camera::initialize(uint32_t w, uint32_t h) {
     width  = w;
@@ -43,21 +131,17 @@ void Camera::initialize(uint32_t w, uint32_t h) {
     m_defocusRadius = focalDist * glm::tan(glm::radians(0.5f * dofAngle));
 }
 
-bool Camera::renderImageCPU(Image& image, const World& scene) const {
-    std::mt19937 randomGenerator(seed);
-    RandomState randomState(&randomGenerator);
-    for (uint32_t y = 0; y < height; ++y) {
-        std::clog << "\rRendering scanlines: " << (y + 1) << " / " << height << " " << std::flush;
-        for (uint32_t x = 0; x < width; ++x) {
-            image.get(x, y) = renderPixel(x, y, scene, randomState);
-        }
+__host__ __device__ glm::vec3 PPCast::Camera::renderPixel(
+    uint32_t x, uint32_t y,
+    const PPCast::World& world,
+    PPCast::RandomState& randomState
+) const {
+    // Perform raytracing
+    glm::vec3 total(0);
+    PPCast::Interval<float> tRange(0.f, INFINITY, true, false);
+    for (uint32_t i = 0; i < raysPerPx; ++i) {
+        const Ray ray = generateRay(x, y, randomState);
+        total += raycast(ray, std::move(tRange), world, randomState);
     }
-    std::clog << "\rRendering completed: " << height << " / " << height << std::flush << std::endl;
-
-    return true;
-}
-
-bool Camera::renderImage(Image& image, const World& scene) const {
-    if (*opt_usegpu) return renderImageGPU(image, scene);
-    else             return renderImageCPU(image, scene);
+    return total / static_cast<float>(raysPerPx);
 }

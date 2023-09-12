@@ -122,8 +122,15 @@ namespace PPCast {
         /// @brief Maximum number of ray bounces
         uint32_t maxBounces;
 
+        //////////////////////////
+        // Computation settings //
+        //////////////////////////
+
         /// @brief Seed for pseudorandom number generation
         uint32_t seed;
+
+        /// @brief Whether to use the GPU for rendering
+        bool useGPU;
 
         /**
          * @brief Default camera constructor -- constructs camera using commandline options
@@ -165,6 +172,15 @@ namespace PPCast {
             RandomState& randomState
         ) const;
     };
+
+    ////////////////////////////////////
+    // Inline function implementation //
+    ////////////////////////////////////
+
+    inline bool Camera::renderImage(Image& image, const World& scene) const {
+        if (useGPU) return renderImageGPU(image, scene);
+        else        return renderImageCPU(image, scene);
+    }
 }
 
 #endif
