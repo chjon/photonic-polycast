@@ -39,7 +39,7 @@ bool Camera::renderImageCPU(Image& image, const World& scene) const {
     return true;
 }
 
-__host__ __device__ PPCast::Ray PPCast::Camera::generateRay(uint32_t x, uint32_t y, PPCast::RandomState& randomState) const {
+__host__ __device__ Ray Camera::generateRay(uint32_t x, uint32_t y, RandomState& randomState) const {
     // Compute origin point in viewspace
     glm::vec3 rayOrigin = {0, 0, 0}; 
 
@@ -61,7 +61,7 @@ __host__ __device__ PPCast::Ray PPCast::Camera::generateRay(uint32_t x, uint32_t
     // Return ray in worldspace
     const glm::vec4 worldspaceRayOrigin = m_v2w * glm::vec4(rayOrigin, 1);
     const glm::vec4 worldspaceRayDir    = glm::normalize(worldspacePixelSample - worldspaceRayOrigin);
-    return PPCast::Ray(worldspaceRayOrigin, worldspaceRayDir);
+    return Ray(worldspaceRayOrigin, worldspaceRayDir);
 }
 
 __host__ __device__ static glm::vec3 getSkyboxColour(const glm::vec4& direction) {
@@ -71,17 +71,17 @@ __host__ __device__ static glm::vec3 getSkyboxColour(const glm::vec4& direction)
     return (1.f - a) * skyBottomColour + a * skyTopColour;
 }
 
-__host__ __device__ glm::vec3 PPCast::Camera::raycast(
+__host__ __device__ glm::vec3 Camera::raycast(
     const Ray& ray, Interval<float>&& tRange,
-    const PPCast::World& world, PPCast::RandomState& randomState
+    const World& world, RandomState& randomState
 ) const {
-    PPCast::Ray currentRay = ray;
+    Ray currentRay = ray;
     glm::vec3 totalAttenuation(1);
 
     uint32_t maxDepth = maxBounces;
     while (maxDepth--) {
         // Check if ray intersects with geometry
-        PPCast::HitInfo hitInfo;
+        HitInfo hitInfo;
         const bool hit = world.getIntersection(hitInfo, currentRay, tRange);
 
         // Return the sky colour if there is no intersection
@@ -91,7 +91,7 @@ __host__ __device__ glm::vec3 PPCast::Camera::raycast(
         glm::vec4 scatterDirection;
         glm::vec3 attenuation;
         assert(static_cast<uint32_t>(hitInfo.materialID) != UINT32_MAX);
-        const PPCast::Material& material = world.materials[static_cast<uint32_t>(hitInfo.materialID)];
+        const Material& material = world.materials[static_cast<uint32_t>(hitInfo.materialID)];
         const bool generatedRay = material.scatter(
             scatterDirection,
             attenuation,
@@ -105,7 +105,7 @@ __host__ __device__ glm::vec3 PPCast::Camera::raycast(
 
         // Cast the generated ray
         tRange.lower = 1e-3f;
-        currentRay = PPCast::Ray(hitInfo.hitPoint, glm::normalize(scatterDirection));
+        currentRay = Ray(hitInfo.hitPoint, glm::normalize(scatterDirection));
         totalAttenuation = totalAttenuation * attenuation;
     }
 
@@ -131,14 +131,14 @@ void Camera::initialize(uint32_t w, uint32_t h) {
     m_defocusRadius = focalDist * glm::tan(glm::radians(0.5f * dofAngle));
 }
 
-__host__ __device__ glm::vec3 PPCast::Camera::renderPixel(
+__host__ __device__ glm::vec3 Camera::renderPixel(
     uint32_t x, uint32_t y,
-    const PPCast::World& world,
-    PPCast::RandomState& randomState
+    const World& world,
+    RandomState& randomState
 ) const {
     // Perform raytracing
     glm::vec3 total(0);
-    PPCast::Interval<float> tRange(0.f, INFINITY, true, false);
+    Interval<float> tRange(0.f, INFINITY, true, false);
     for (uint32_t i = 0; i < raysPerPx; ++i) {
         const Ray ray = generateRay(x, y, randomState);
         total += raycast(ray, std::move(tRange), world, randomState);
