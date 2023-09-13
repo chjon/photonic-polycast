@@ -16,7 +16,9 @@ CPPFLAGS = $(COMPILERFLAGS) --compiler-options $(subst $(SPACE),$(COMMA),$(CPPWA
 
 CU = nvcc
 CUWARNS = -Wall -Wextra -Werror -Wshadow -Wconversion -Wno-pedantic
-CUFLAGS = $(COMPILERFLAGS) --compiler-options $(subst $(SPACE),$(COMMA),$(CUWARNS)) --relocatable-device-code=true -lineinfo
+CUFLAGS = $(COMPILERFLAGS) --compiler-options $(subst $(SPACE),$(COMMA),$(CUWARNS))
+CUFLAGS += --Werror cross-execution-space-call,reorder,deprecated-declarations
+CUFLAGS += --relocatable-device-code=true -lineinfo
 
 LDFLAGS = `libpng-config --ldflags`
 
