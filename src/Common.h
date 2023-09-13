@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 
-// Printing GLM vectors and matrices
+// Printing GLM vectors
 template <glm::length_t L, typename T, glm::qualifier Q>
 std::ostream& operator<<(std::ostream &os, const glm::vec<L, T, Q>& v) {
     os << '(' << v[0];
@@ -26,6 +26,7 @@ std::ostream& operator<<(std::ostream &os, const glm::vec<L, T, Q>& v) {
     return os << ')';
 }
 
+// Printing GLM matrices
 template <glm::length_t C, glm::length_t R, typename T, glm::qualifier Q>
 std::ostream& operator<<(std::ostream &os, const glm::mat<C, R, T, Q>& m) {
     os << '(' << m[0];
