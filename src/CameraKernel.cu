@@ -24,9 +24,9 @@ __global__ void renderInit(
 
 __global__ void renderImageGPUKernel(
     float3 *frameBuffer, int width, int height,
-    VectorRef<Material>* materials,
-    VectorRef<GeometryNode>* geometry,
-    Camera* camera, curandState *randomState
+    VectorRef<Material>* __restrict__ materials,
+    VectorRef<GeometryNode>* __restrict__ geometry,
+    const Camera* __restrict__ camera, curandState* __restrict__ randomState
 ) {
     // Compute pixel index
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -48,10 +48,12 @@ __global__ void renderImageGPUKernel(
 }
 
 bool Camera::renderImageGPU(Image& image, const World& world) const {
-    // Allocate device buffers
-    unsigned int numPixels = width * height;
-    CudaDeviceVec<float3>                  d_frameBuffer(numPixels);
-    CudaDeviceVec<curandState>             d_randState  (numPixels);
+    // Allocate output data buffers
+    const uint32_t numPixels = width * height;
+    CudaDeviceVec<float3>      d_frameBuffer(numPixels);
+    CudaDeviceVec<curandState> d_randState  (numPixels);
+
+    // Allocate input data buffers
     CudaDeviceBox<VectorRef<Material>>     d_materials  (world.materials);
     CudaDeviceBox<VectorRef<GeometryNode>> d_geometry   (world.geometry);
     CudaDeviceVec<Camera>                  d_camera     (*this);
@@ -62,10 +64,10 @@ bool Camera::renderImageGPU(Image& image, const World& world) const {
     d_camera   .copyToDevice();
 
     // Compute thread block dimensions
-    int tx = 8;
-    int ty = 8;
-    dim3 blocks(width / tx + 1, height / ty + 1);
-    dim3 threads(tx,ty);
+    constexpr uint32_t blockWidth  = 8;
+    constexpr uint32_t blockHeight = 8;
+    const dim3 blocks((width / blockWidth) + 1, (height / blockHeight) + 1);
+    const dim3 threads(blockWidth, blockHeight);
 
     // Initialize
     renderInit<<<blocks, threads>>>(
