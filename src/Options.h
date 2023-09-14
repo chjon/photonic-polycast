@@ -21,27 +21,82 @@ namespace PPCast {
      */
     class Options {
     private:
+        /// @brief A registry of all the program options
         static std::vector<Option*> options;
         friend class Option;
 
     public:
+        /**
+         * @brief Parse options from the command line
+         * 
+         * @param argc The number of program arguments
+         * @param argv The list of program arguments
+         * @return 0 if parsing was successful; otherwise, return an error code
+         */
         static int parseOptions(int argc, char *const *argv);
+
+        /**
+         * @brief Print the program configuration based on the given command line options
+         * 
+         * @param os The output stream
+         */
         static void printConfig(std::ostream &os);
+
+        /**
+         * @brief Print a help string for the program and descriptions of each option
+         * 
+         * @param os The output stream
+         * @param commandName The name of the program
+         */
         static void printHelp(std::ostream &os, char *commandName);
     };
 
+    /**
+     * @brief An abstract class representing a program option
+     * 
+     */
     class Option {
     protected:
+        /// @brief The name of the option
         const std::string m_name;
-        const std::string m_desc;
-        const int         m_hasArg;
 
+        /// @brief A description of the opbtion
+        const std::string m_desc;
+
+        /// @brief Whether the option requires an argument (see getopt documentation for details)
+        const int m_hasArg;
+
+        /**
+         * @brief Print the option as a string -- this is used as a virtual override of the
+         * @code{ostream} object's @code{operator<<} method
+         * 
+         * @param os The output stream
+         * @return The output stream -- returned for chaining the << operator
+         */
         virtual std::ostream& toStream(std::ostream &os) const = 0;
 
     public:
+        /**
+         * @brief Construct a new Option object
+         * 
+         * @param name The name of the option
+         * @param desc A description of the option
+         * @param hasArg Whether the option requires an argument (see getopt documentation for details)
+         */
         Option(const std::string& name, const std::string& desc, int hasArg);
 
+        /**
+         * @brief Get the name of the option
+         * 
+         * @return the name of the option
+         */
         const std::string& name() const { return m_name; }
+
+        /**
+         * @brief Get a description of the option
+         * 
+         * @return a description of the option
+         */
         const std::string& desc() const { return m_desc; }
 
         int hasArg() const { return m_hasArg; }

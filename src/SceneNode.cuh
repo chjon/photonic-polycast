@@ -6,12 +6,23 @@
 #include "Material.cuh"
 
 namespace PPCast {
+    /**
+     * @brief A class representing a node in the scene
+     * 
+     */
     class SceneNode {
     protected:
+        /// @brief The node's transformation matrix
         glm::mat4x4 transform;
+
+        /// @brief The inverse of the node's transformation matrix
         glm::mat4x4 invtransform;
 
     public:
+        /**
+         * @brief Construct a new Scene Node object with no transformation
+         * 
+         */
         SceneNode() : transform(1.f), invtransform(1.f) {}
 
         //////////
@@ -51,25 +62,51 @@ namespace PPCast {
         inline SceneNode& rotateZ(const float angle_rad) { return rotate(angle_rad, glm::vec3(0, 0, 1)); }
     };
 
+    /**
+     * @brief A class representing geometry in the scene
+     * 
+     */
     class GeometryNode: public SceneNode {
     private:
+        /// @brief The type of geometry
         Geometry::Primitive m_primitive;
 
     public:
+        /// @brief The object's material
         MaterialID materialID;
 
+        /**
+         * @brief Construct a new Geometry Node object
+         * 
+         * @param primitive The type of geometry
+         * @param material The object's material
+         */
         GeometryNode(Geometry::Primitive primitive, const Material& material)
             : SceneNode()
             , m_primitive(primitive)
             , materialID(material.id)
         {}
 
+        /**
+         * @brief Construct a new Geometry Node object
+         * 
+         * @param primitive The type of geometry
+         * @param matID The object's material
+         */
         GeometryNode(Geometry::Primitive primitive, MaterialID matID)
             : SceneNode()
             , m_primitive(primitive)
             , materialID(matID)
         {}
 
+        /**
+         * @brief Check whether a ray intersects with the geometry
+         * 
+         * @param hitInfo Output: information about how the ray intersects the geometry
+         * @param r The ray to check
+         * @param tRange The valid range for multiples of the ray's direction vector
+         * @return true if the ray intersects with the geometry
+         */
         __host__ __device__ bool getIntersection(HitInfo& hitInfo, const Ray& r, const Interval<float>& tRange) const;
     };
 }
