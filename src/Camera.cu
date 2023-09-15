@@ -58,10 +58,13 @@ __host__ __device__ Ray Camera::generateRay(uint32_t x, uint32_t y, RandomState&
     // Compute the pixel sample position in the worldspace focal plane
     glm::vec4 worldspacePixelSample = m_v2w * glm::vec4(pixelSample, 1);
 
+    // Sample a random ray emission time
+    const float sampleTime = randomFloat(randomState);
+
     // Return ray in worldspace
     const glm::vec4 worldspaceRayOrigin = m_v2w * glm::vec4(rayOrigin, 1);
     const glm::vec4 worldspaceRayDir    = glm::normalize(worldspacePixelSample - worldspaceRayOrigin);
-    return Ray(worldspaceRayOrigin, worldspaceRayDir);
+    return Ray(worldspaceRayOrigin, worldspaceRayDir, sampleTime);
 }
 
 __host__ __device__ static glm::vec3 getSkyboxColour(const glm::vec4& direction) {
@@ -105,7 +108,7 @@ __host__ __device__ glm::vec3 Camera::raycast(
 
         // Cast the generated ray
         tRange.lower = 1e-3f;
-        currentRay = Ray(hitInfo.hitPoint, glm::normalize(scatterDirection));
+        currentRay = Ray(hitInfo.hitPoint, glm::normalize(scatterDirection), ray.time());
         totalAttenuation = totalAttenuation * attenuation;
     }
 

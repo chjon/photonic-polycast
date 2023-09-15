@@ -41,16 +41,21 @@ namespace PPCast {
         /// @brief The ray's direction
         glm::vec4 m_direction;
 
+        /// @brief The ray's sample time
+        float m_time;
+
     public:
         /**
          * @brief Construct a new Ray
          * 
          * @param origin The origin position of the ray
          * @param direction The direction of the ray
+         * @param time The time at which the ray was sampled
          */
-        __host__ __device__ Ray(const glm::vec3& origin, const glm::vec3& direction)
+        __host__ __device__ Ray(const glm::vec3& origin, const glm::vec3& direction, const float time)
             : m_origin   (origin, 1)
             , m_direction(direction, 0)
+            , m_time     (time)
         {}
         
         /**
@@ -59,9 +64,10 @@ namespace PPCast {
          * @param origin The origin position of the ray
          * @param direction The direction of the ray
          */
-        __host__ __device__ Ray(const glm::vec4& origin, const glm::vec4& direction)
+        __host__ __device__ Ray(const glm::vec4& origin, const glm::vec4& direction, const float time)
             : m_origin   (origin)
             , m_direction(direction)
+            , m_time     (time)
         {}
 
         /**
@@ -77,6 +83,13 @@ namespace PPCast {
          * @return The ray's direction
          */
         __host__ __device__ const glm::vec4& direction() const { return m_direction; }
+
+        /**
+         * @brief Get the ray's sample time
+         * 
+         * @return The ray's sample time
+         */
+        __host__ __device__ const float& time() const { return m_time; }
 
         /**
          * @brief Get the position of the ray for given scaling value

@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "Camera.cuh"
+#include "Curve.cuh"
 #include "Image.h"
 #include "Material.cuh"
 #include "Options.h"
@@ -45,6 +46,13 @@ static void makeScene(
     Material metalFuzz     = vecInsert(mats, Material(MaterialType::Reflective, {glm::vec3(0.8, 0.6, 0.2), 0.3f, 1.0f}));
     Material glass         = vecInsert(mats, Material(MaterialType::Refractive, {glm::vec3(1.0, 1.0, 1.0), 0.0f, 1.5f}));
     Material invglass      = vecInsert(mats, Material(MaterialType::Refractive, {glm::vec3(1.0, 1.0, 1.0), 0.0f, 1.f/1.5f}));
+
+    // Set up motion curves
+    MotionCurve forward = MotionCurve{
+        Curve<glm::vec3>::makeCurve<CurveType::LINEAR>({glm::vec3(0.0), glm::vec3(0.0, 0.0, 1.0)}),
+        Curve<glm::mat4>::makeCurve<CurveType::LINEAR>({glm::mat4(1.0), glm::mat4(1.0)}),
+        Curve<glm::vec3>::makeCurve<CurveType::LINEAR>({glm::vec3(1.0), glm::vec3(1.0)}),
+    };
 
     // Generate scene
     switch (*opt_scene) {
@@ -144,7 +152,7 @@ static void makeScene(
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, lambertYellow)); scene.back()
                 .scale(100.f)
                 .translate({0, -100.5, 0});
-            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, lambertRed)); scene.back()
+            scene.push_back(GeometryNode(Geometry::Primitive::Sphere, lambertRed, forward)); scene.back()
                 .scale(0.5f);
             scene.push_back(GeometryNode(Geometry::Primitive::Sphere, glass)); scene.back()
                 .scale(0.5f)

@@ -4,6 +4,7 @@
 #include "Common.h"
 #include "Geometry.cuh"
 #include "Material.cuh"
+#include "Curve.cuh"
 
 namespace PPCast {
     /**
@@ -18,12 +19,19 @@ namespace PPCast {
         /// @brief The inverse of the node's transformation matrix
         glm::mat4x4 invtransform;
 
+        /// @brief The node's motion curve
+        MotionCurve motionCurve;
+
     public:
         /**
          * @brief Construct a new Scene Node object with no transformation
          * 
          */
-        SceneNode() : transform(1.f), invtransform(1.f) {}
+        SceneNode(const MotionCurve& motionCurve_)
+            : transform(1.f)
+            , invtransform(1.f)
+            , motionCurve(motionCurve_)
+        {}
 
         //////////
         // Scaling
@@ -82,7 +90,23 @@ namespace PPCast {
          * @param material The object's material
          */
         GeometryNode(Geometry::Primitive primitive, const Material& material)
-            : SceneNode()
+            : SceneNode(MotionCurve{
+                Curve<glm::vec3>::makeCurve<CurveType::CONSTANT>({glm::vec3(0.0)}),
+                Curve<glm::mat4>::makeCurve<CurveType::CONSTANT>({glm::mat4(1.0)}),
+                Curve<glm::vec3>::makeCurve<CurveType::CONSTANT>({glm::vec3(1.0)}),
+            })
+            , m_primitive(primitive)
+            , materialID(material.id)
+        {}
+
+        /**
+         * @brief Construct a new Geometry Node object
+         * 
+         * @param primitive The type of geometry
+         * @param material The object's material
+         */
+        GeometryNode(Geometry::Primitive primitive, const Material& material, const MotionCurve& motionCurve_)
+            : SceneNode(motionCurve_)
             , m_primitive(primitive)
             , materialID(material.id)
         {}
@@ -94,7 +118,11 @@ namespace PPCast {
          * @param matID The object's material
          */
         GeometryNode(Geometry::Primitive primitive, MaterialID matID)
-            : SceneNode()
+            : SceneNode(MotionCurve{
+                Curve<glm::vec3>::makeCurve<CurveType::CONSTANT>({glm::vec3(0.0)}),
+                Curve<glm::mat4>::makeCurve<CurveType::CONSTANT>({glm::mat4(1.0)}),
+                Curve<glm::vec3>::makeCurve<CurveType::CONSTANT>({glm::vec3(1.0)}),
+            })
             , m_primitive(primitive)
             , materialID(matID)
         {}
